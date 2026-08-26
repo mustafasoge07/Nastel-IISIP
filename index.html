@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warkop Nastel IISIP</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #ffd900;
+            --primary-hover: #e6c200;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --primary: #ef4444;
+            --primary-hover: #dc2626;
+            --accent: #60a5fa;
+            --accent-hover: #3b82f6;
+            --border-color: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0 auto;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background-color: var(--bg-color);
+            transition: background-color 0.3s, color 0.3s;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .btn-theme {
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+        }
+
+        .btn-theme:hover {
+            transform: scale(1.05);
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profil-img {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 150px;
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+        }
+
+        .intro-text {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 15px;
+            font-size: 0.95rem;
+        }
+
+        nav {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 8px 16px;
+            margin: 25px 0 35px 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 15px;
+            z-index: 100;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        nav a {
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover {
+            background-color: var(--primary);
+            color: #000000;
+        }
+
+        .category-title {
+            font-size: 1.5rem;
+            margin: 30px 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .menu-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .menu-card img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .menu-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .menu-name {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: var(--text-main);
+        }
+
+        .menu-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .menu-price {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .btn-beli {
+            background-color: var(--primary);
+            color: #000000;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-beli:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 480px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-title {
+            margin: 0 0 8px 0;
+            font-size: 1.3rem;
+        }
+
+        .modal-price {
+            font-size: 1.1rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .modal-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        #modalBuyBtn {
+            background-color: var(--accent);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #modalBuyBtn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .floating-cart-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+            z-index: 100;
+        }
+
+        .floating-cart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .cart-badge {
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        .cart-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100%;
+            background-color: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 999;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-drawer.active {
+            right: 0;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .cart-title {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .cart-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .cart-items {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cart-item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .cart-item-price {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-qty {
+            background: var(--border-color);
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .cart-footer {
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .cart-total-price {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-checkout:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 30px;
+        }
+
+        .floating-music-btn {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: #c8a97e;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            z-index: 998;
+        }
+
+        .floating-music-btn:hover {
+            transform: scale(1.05);
+            background-color: #a68962;
+        }
+
+        .floating-music-btn.playing {
+            background-color: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-top">
+            <button id="themeToggle" class="btn-theme" aria-label="Ganti Tema">🌙 Mode Gelap</button>
+        </div>
+        <div class="hero">
+            <img class="profil-img" src="nastelfoto/Gemini_Generated_Image_f3mfdcf3mfdcf3mf.jpg"
+                alt="Warkop Nastel IISIP">
+            <h1>Warkop Nastel IISIP</h1>
+            <p class="intro-text">Menyediakan berbagai menu makanan dan minuman yang cocok dinikmati bersama teman-teman
+                sambil bersantai.</p>
+        </div>
+    </header>
+
+    <nav>
+        <a href="#makanan">Makanan 🍛</a>
+        <a href="#minuman">Minuman ☕</a>
+    </nav>
+
+    <main>
+        <!-- SEKSI MAKANAN -->
+        <section id="makanan">
+            <h2 class="category-title">🍛 Menu Makanan</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <img src="nastelfoto/resep-mie-tek-tek-kuah1.jpg" alt="Mie Tek-Tek">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Mie Tek Tek</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 15.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/Nasi Ancur.jpg" alt="Nasi Ancur">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Nasi Ancur</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 15.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/aneka indomie.jpg" alt="Aneka Indomie">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Aneka Indomie</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 8.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/aneka indomie.jpg" alt="Aneka Indomie + Telur">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Aneka Indomie + Telur</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 12.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/nasi telur.jpeg" alt="Nasi Telur">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Nasi Telur </h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 12.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/nasi goreng.jpg" alt="Nasi Goreng/Nasi Goreng Kampung">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Nasi Goreng/Nasi Goreng Kampung</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 15.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/omelette.jpg" alt="Omelette">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Omelette</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 14.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/omelette.jpg" alt="Omelette + Nasi">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Omelette + Nasi</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 15.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/kwetiau.jpg" alt="Kwetiau Goreng">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Kwetiau Goreng </h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 15.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/otakotak.jpg" alt="Otak-Otak">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Otak-Otak </h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 13.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/sosis.jpg" alt="Sosis Goreng">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Sosis Goreng</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 13.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/magelangan.jpg" alt="Nastel/Magelangan">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Nastel/Magelangan</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 15.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEKSI MINUMAN -->
+        <section id="minuman">
+            <h2 class="category-title">☕ Menu Minuman</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <img src="nastelfoto/kopi abc.jpg" alt="kopi abc panas">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Aneka kopi ABC (Panas)</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 4.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/ABC Klepon.jpg" alt="kopi abc kelepon panas">
+                    <div class="menu-info">
+                        <h3 class="menu-name">ABC Kelepon (Panas)</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 5.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/ABC Klepon.jpg" alt="kopi abc kelepon es">
+                    <div class="menu-info">
+                        <h3 class="menu-name">ABC Kelepon (Es)</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 7.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/kapal api.jpg" alt="kopi kapal api panas">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Kopi Kapal Api (Panas)</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp.5.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/kopiliong.jpg" alt="kopi liong panas">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Kopi Liong (Panas)</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 5.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/aneka tijus.jpg" alt="minuman teajus">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Aneka Teajus</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp.3.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/aneka goodday.jpg" alt="minuman good day">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Aneka Good Day Panas</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 5.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/aneka goodday.jpg" alt="minuman good day">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Aneka Good Day Dingin</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 8.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/milo.jpg" alt="minuman milo dingin">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Milo Dingin</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 8.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <img src="nastelfoto/teh manis.jpg" alt="Teh Manis Panas/Dingin">
+                    <div class="menu-info">
+                        <h3 class="menu-name">Teh Manis Panas/Dingin</h3>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp. 5.000 </span>
+                            <button class="btn-beli">Beli</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- COMPONENT MODAL POPUP DETAIL PRODUK -->
+    <div id="detailModal" class="modal-overlay" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <img id="modalImg" src="" alt="" class="modal-img">
+            <div class="modal-body">
+                <h3 id="modalTitle" class="modal-title"></h3>
+                <div id="modalPrice" class="modal-price"></div>
+                <p id="modalDesc" class="modal-desc"></p>
+                <div class="modal-footer">
+                    <button id="modalBuyBtn">Beli Sekarang</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PEMBAYARAN MANUAL -->
+    <div id="paymentModal" class="modal-overlay" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" id="paymentModalClose">&times;</button>
+            <div class="modal-body" style="text-align: center;">
+                <h3 class="modal-title">Pembayaran Pesanan</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Silakan transfer sesuai total tagihan di bawah ini:</p>
+                
+                <div id="paymentTotal" style="font-size: 1.4rem; font-weight: bold; color: var(--accent); margin: 10px 0;">Rp 0</div>
+
+                <!-- Area QRIS atau Rekening -->
+                <div style="background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--border-color);">
+                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 0.9rem;">Scan QRIS / Transfer Bank</p>
+                    <img src="QRSNastel.jpg" alt="QRIS Pembayaran" style="max-width: 180px; width: 100%; border-radius: 8px; margin-bottom: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        <strong>BCA:</strong> 1234-5678-90 a.n Warkop Nastel<br>
+                        <strong>DANA/OVO:</strong> 0821-4588-5717
+                    </div>
+                </div>
+
+                <p style="font-size: 0.8rem; color: #ef4444; margin-bottom: 30px;">
+                    <strong>⚠️ Simpan / screenshot bukti transfer untuk dikirimkan via WhatsApp.</strong>
+                </p>
+
+                <div class="modal-footer" style="justify-content: center;">
+                    <button id="confirmPaymentBtn" style="background-color: #22c55e; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%;">
+                        ✅ Saya Sudah Bayar (Kirim ke WA)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING CART & DRAWER -->
+    <button id="floatingCartBtn" class="floating-cart-btn">
+        🛒 <span id="cartBadge" class="cart-badge">0</span>
+    </button>
+
+    <div id="cartDrawer" class="cart-drawer">
+        <div class="cart-header">
+            <h3 class="cart-title">Keranjang Saya</h3>
+            <button id="cartClose" class="cart-close">&times;</button>
+        </div>
+
+        <div class="cart-items" id="cartBody"></div>
+
+        <div class="cart-footer">
+            <div class="cart-total-price">
+                <span>Total:</span>
+                <span id="cartTotal">Rp 0</span>
+            </div>
+            <button id="checkoutBtn" class="btn-checkout">Lanjut Pembayaran</button>
+        </div>
+    </div>
+
+    <!-- ELEMEN AUDIO & TOMBOL MUSIK -->
+    <audio id="cafeMusic" loop>
+        <source src="musik/TRAUMA.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggleBtn" class="floating-music-btn" aria-label="Play/Pause Music">
+        🎵 <span id="musicStatus">Play Music</span>
+    </button>
+
+    <footer>
+        <p>&copy; 2026 Warkop Nastel IISIP. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const whatsappNumber = "6282145885717";
+
+        // --- 1. MODAL DETAIL PRODUK ---
+        const menuCards = document.querySelectorAll('.menu-card');
+        const detailModal = document.getElementById('detailModal');
+        const modalClose = document.getElementById('modalClose');
+        const modalImg = document.getElementById('modalImg');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalPrice = document.getElementById('modalPrice');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalBuyBtn = document.getElementById('modalBuyBtn');
+
+        let currentActiveItem = { title: '', price: '' };
+
+        menuCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-beli')) return;
+
+                const imgUrl = card.querySelector('img').src;
+                const title = card.querySelector('.menu-name').textContent;
+                const price = card.querySelector('.menu-price').textContent;
+
+                currentActiveItem = { title, price };
+
+                modalImg.src = imgUrl;
+                modalTitle.textContent = title;
+                modalPrice.textContent = price;
+                modalDesc.textContent = 'Nikmati sajian spesial pilihan dari Warkop Nastel IISIP.';
+
+                detailModal.classList.add('active');
+                detailModal.setAttribute('aria-hidden', 'false');
+            });
+
+            const btnBeli = card.querySelector('.btn-beli');
+            btnBeli.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const title = card.querySelector('.menu-name').textContent;
+                const price = card.querySelector('.menu-price').textContent;
+                addToCart(title, price);
+            });
+        });
+
+        function closeModal() {
+            detailModal.classList.remove('active');
+            detailModal.setAttribute('aria-hidden', 'true');
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) closeModal();
+        });
+
+        modalBuyBtn.addEventListener('click', () => {
+            addToCart(currentActiveItem.title, currentActiveItem.price);
+            closeModal();
+        });
+
+        // --- 2. KERANJANG BELANJA (CART) ---
+        let cart = JSON.parse(localStorage.getItem('kaficart')) || [];
+
+        const cartBadge = document.getElementById('cartBadge');
+        const cartDrawer = document.getElementById('cartDrawer');
+        const floatingCartBtn = document.getElementById('floatingCartBtn');
+        const cartClose = document.getElementById('cartClose');
+        const cartBody = document.getElementById('cartBody');
+        const cartTotal = document.getElementById('cartTotal');
+
+        floatingCartBtn.addEventListener('click', () => cartDrawer.classList.add('active'));
+        cartClose.addEventListener('click', () => cartDrawer.classList.remove('active'));
+
+        function parsePrice(priceStr) {
+            return parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        function formatRupiah(amount) {
+            return 'Rp ' + amount.toLocaleString('id-ID');
+        }
+
+        function addToCart(title, priceStr) {
+            const price = parsePrice(priceStr);
+            const existingIndex = cart.findIndex(item => item.title === title);
+
+            if (existingIndex !== -1) {
+                cart[existingIndex].qty += 1;
+            } else {
+                cart.push({ title, price, qty: 1 });
+            }
+
+            updateCartUI();
+        }
+
+        window.changeQty = function (index, change) {
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            updateCartUI();
+        };
+
+        function updateCartUI() {
+            localStorage.setItem('kaficart', JSON.stringify(cart));
+
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            cartBadge.textContent = totalItems;
+
+            if (cart.length === 0) {
+                cartBody.innerHTML = '<p class="cart-empty">Keranjang Anda masih kosong!</p>';
+                cartTotal.textContent = 'Rp 0';
+                return;
+            }
+
+            let html = '';
+            let totalHarga = 0;
+
+            cart.forEach((item, index) => {
+                totalHarga += item.price * item.qty;
+                html += `
+                    <div class="cart-item">
+                        <div>
+                            <div class="cart-item-title">${item.title}</div>
+                            <div class="cart-item-price">${formatRupiah(item.price)}</div>
+                        </div>
+                        <div class="qty-controls">
+                            <button class="btn-qty" onclick="changeQty(${index}, -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="btn-qty" onclick="changeQty(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            cartBody.innerHTML = html;
+            cartTotal.textContent = formatRupiah(totalHarga);
+        }
+
+        updateCartUI();
+
+        // --- 3. LOGIKA MODAL PEMBAYARAN MANUAL ---
+        const paymentModal = document.getElementById('paymentModal');
+        const paymentModalClose = document.getElementById('paymentModalClose');
+        const paymentTotal = document.getElementById('paymentTotal');
+        const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+
+        // Buka modal pembayaran saat tombol checkout diklik
+        document.getElementById('checkoutBtn').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('Keranjang Anda masih kosong!');
+                return;
+            }
+
+            const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            paymentTotal.textContent = formatRupiah(totalHarga);
+
+            cartDrawer.classList.remove('active');
+            paymentModal.classList.add('active');
+            paymentModal.setAttribute('aria-hidden', 'false');
+        });
+
+        function closePaymentModal() {
+            paymentModal.classList.remove('active');
+            paymentModal.setAttribute('aria-hidden', 'true');
+        }
+
+        paymentModalClose.addEventListener('click', closePaymentModal);
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) closePaymentModal();
+        });
+
+        // Kirim konfirmasi pembayaran ke WhatsApp
+        confirmPaymentBtn.addEventListener('click', () => {
+            let pesan = "🚨 *PESANAN BARU (SUDAH TRANSFER)* 🚨\n\n";
+            pesan += "Halo Warkop Nastel IISIP, saya sudah melakukan pembayaran untuk pesanan berikut:\n\n";
+
+            cart.forEach((item, index) => {
+                const subtotal = item.price * item.qty;
+                pesan += `${index + 1}. ${item.title} (${item.qty}x) = ${formatRupiah(subtotal)}\n`;
+            });
+
+            const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            pesan += `\n*TOTAL DIBAYAR: ${formatRupiah(totalHarga)}*`;
+            pesan += "\n\n📌 *Bukti transfer akan saya lampirkan di bawah ini.* Mohon segera diproses ya, terima kasih!";
+
+            const pesanEncoded = encodeURIComponent(pesan);
+            const waUrl = `https://wa.me/${whatsappNumber}?text=${pesanEncoded}`;
+
+            cart = [];
+            updateCartUI();
+            closePaymentModal();
+            window.open(waUrl, '_blank');
+        });
+
+        // --- 4. DARK MODE TOGGLE ---
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️ Mode Terang';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+
+            if (body.classList.contains('dark-mode')) {
+                themeToggle.textContent = '☀️ Mode Terang';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeToggle.textContent = '🌙 Mode Gelap';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // --- 5. FITUR MUSIK LATAR ---
+        const musicBtn = document.getElementById('musicToggleBtn');
+        const cafeAudio = document.getElementById('cafeMusic');
+        const musicStatus = document.getElementById('musicStatus');
+        let isMusicPlaying = false;
+
+        cafeAudio.volume = 1;
+
+        musicBtn.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                cafeAudio.pause();
+                musicStatus.textContent = "Play Music";
+                musicBtn.classList.remove('playing');
+                isMusicPlaying = false;
+            } else {
+                cafeAudio.play().then(() => {
+                    musicStatus.textContent = "Pause Music";
+                    musicBtn.classList.add('playing');
+                    isMusicPlaying = true;
+                }).catch(error => {
+                    console.error("Gagal memutar audio:", error);
+                    alert("Gagal memutar musik. Pastikan file 'musik/TRAUMA.mp3' ada di dalam folder proyek Anda.");
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
