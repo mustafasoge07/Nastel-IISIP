@@ -74,7 +74,7 @@
 
         .hero {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .profil-img {
@@ -91,6 +91,29 @@
             max-width: 700px;
             margin: 0 auto 15px;
             font-size: 0.95rem;
+        }
+
+        .search-container {
+            max-width: 450px;
+            margin: 0 auto 20px auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: 14px;
+            box-shadow: var(--shadow);
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
         }
 
         nav {
@@ -236,7 +259,8 @@
             border-radius: 20px;
             width: 90%;
             max-width: 480px;
-            overflow: hidden;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
             transform: scale(0.8);
             transition: transform 0.3s ease;
@@ -448,6 +472,30 @@
             padding-top: 15px;
         }
 
+        .cart-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .cart-field {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .cart-field:focus {
+            border-color: var(--accent);
+        }
+
         .cart-total-price {
             display: flex;
             justify-content: space-between;
@@ -534,6 +582,10 @@
             <h1>Warkop Nastel IISIP</h1>
             <p class="intro-text">Menyediakan berbagai menu makanan dan minuman yang cocok dinikmati bersama teman-teman
                 sambil bersantai.</p>
+        </div>
+        <!-- FITUR FILTER PENCARIAN MENU -->
+        <div class="search-container">
+            <input type="text" id="searchMenu" class="search-input" placeholder="🔍 Cari menu makanan atau minuman...">
         </div>
     </header>
 
@@ -814,7 +866,7 @@
         </div>
     </div>
 
-    <!-- MODAL PEMBAYARAN MANUAL -->
+    <!-- MODAL PEMBAYARAN MANUAL (SUDAH DISESUAIKAN UNTUK UPLOAD BUKTI BAYAR) -->
     <div id="paymentModal" class="modal-overlay" role="dialog" aria-hidden="true">
         <div class="modal-content">
             <button class="modal-close" id="paymentModalClose">&times;</button>
@@ -834,13 +886,21 @@
                     </div>
                 </div>
 
-                <p style="font-size: 0.8rem; color: #ef4444; margin-bottom: 30px;">
-                    <strong>⚠️ Simpan / screenshot bukti transfer untuk dikirimkan via WhatsApp.</strong>
+                <!-- INPUT UPLOAD BUKTI TRANSFER -->
+                <div style="margin-bottom: 20px; text-align: left; background: var(--bg-color); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 6px; color: var(--text-main);">
+                        Upload Bukti Pembayaran (Wajib):
+                    </label>
+                    <input type="file" id="proofInput" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+                </div>
+
+                <p style="font-size: 0.8rem; color: #ef4444; margin-bottom: 20px;">
+                    <strong>⚠️ Jangan lupa melampirkan screenshot bukti transfer di chat WhatsApp nanti.</strong>
                 </p>
 
                 <div class="modal-footer" style="justify-content: center;">
-                    <button id="confirmPaymentBtn" style="background-color: #22c55e; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%;">
-                        ✅ Saya Sudah Bayar (Kirim ke WA)
+                    <button id="confirmPaymentBtn" disabled style="background-color: #9ca3af; color: white; border: none; padding: 12px 20px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: not-allowed; width: 100%; transition: all 0.3s ease;">
+                        🔒 Upload Bukti Bayar Dahulu
                     </button>
                 </div>
             </div>
@@ -861,6 +921,12 @@
         <div class="cart-items" id="cartBody"></div>
 
         <div class="cart-footer">
+            <!-- INPUT NOMOR MEJA & CATATAN PESANAN -->
+            <div class="cart-inputs">
+                <input type="text" id="tableNumber" class="cart-field" placeholder="📍 Nomor Meja / Duduk di mana?">
+                <textarea id="orderNote" class="cart-field" rows="2" placeholder="📝 Catatan khusus (misal: pedas setengah matang, es teh sedikit gula)" style="resize: vertical;"></textarea>
+            </div>
+
             <div class="cart-total-price">
                 <span>Total:</span>
                 <span id="cartTotal">Rp 0</span>
@@ -1020,11 +1086,12 @@
 
         updateCartUI();
 
-        // --- 3. LOGIKA MODAL PEMBAYARAN MANUAL ---
+        // --- 3. LOGIKA MODAL PEMBAYARAN MANUAL & VERIFIKASI BUKTI TRANSFER ---
         const paymentModal = document.getElementById('paymentModal');
         const paymentModalClose = document.getElementById('paymentModalClose');
         const paymentTotal = document.getElementById('paymentTotal');
         const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+        const proofInput = document.getElementById('proofInput');
 
         // Buka modal pembayaran saat tombol checkout diklik
         document.getElementById('checkoutBtn').addEventListener('click', () => {
@@ -1036,9 +1103,31 @@
             const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             paymentTotal.textContent = formatRupiah(totalHarga);
 
+            // Reset input file & tombol saat modal dibuka kembali
+            proofInput.value = '';
+            confirmPaymentBtn.disabled = true;
+            confirmPaymentBtn.style.backgroundColor = "#9ca3af";
+            confirmPaymentBtn.style.cursor = "not-allowed";
+            confirmPaymentBtn.textContent = "🔒 Upload Bukti Bayar Dahulu";
+
             cartDrawer.classList.remove('active');
             paymentModal.classList.add('active');
             paymentModal.setAttribute('aria-hidden', 'false');
+        });
+
+        // Validasi Upload File Pembayaran
+        proofInput.addEventListener('change', () => {
+            if (proofInput.files && proofInput.files[0]) {
+                confirmPaymentBtn.disabled = false;
+                confirmPaymentBtn.style.backgroundColor = "#22c55e";
+                confirmPaymentBtn.style.cursor = "pointer";
+                confirmPaymentBtn.textContent = "✅ Saya Sudah Bayar (Kirim ke WA)";
+            } else {
+                confirmPaymentBtn.disabled = true;
+                confirmPaymentBtn.style.backgroundColor = "#9ca3af";
+                confirmPaymentBtn.style.cursor = "not-allowed";
+                confirmPaymentBtn.textContent = "🔒 Upload Bukti Bayar Dahulu";
+            }
         });
 
         function closePaymentModal() {
@@ -1051,10 +1140,16 @@
             if (e.target === paymentModal) closePaymentModal();
         });
 
-        // Kirim konfirmasi pembayaran ke WhatsApp
+        // Kirim konfirmasi pembayaran + detail meja & catatan ke WhatsApp
         confirmPaymentBtn.addEventListener('click', () => {
+            const tableNum = document.getElementById('tableNumber').value.trim() || "Tidak diisi";
+            const note = document.getElementById('orderNote').value.trim() || "Tidak ada";
+
             let pesan = "🚨 *PESANAN BARU (SUDAH TRANSFER)* 🚨\n\n";
-            pesan += "Halo Warkop Nastel IISIP, saya sudah melakukan pembayaran untuk pesanan berikut:\n\n";
+            pesan += `📍 *No. Meja/Lokasi:* ${tableNum}\n`;
+            pesan += `📝 *Catatan Khusus:* ${note}\n\n`;
+            pesan += "-----------------------------------\n";
+            pesan += "*Rincian Pesanan:*\n";
 
             cart.forEach((item, index) => {
                 const subtotal = item.price * item.qty;
@@ -1062,19 +1157,40 @@
             });
 
             const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            pesan += `\n*TOTAL DIBAYAR: ${formatRupiah(totalHarga)}*`;
-            pesan += "\n\n📌 *Bukti transfer akan saya lampirkan di bawah ini.* Mohon segera diproses ya, terima kasih!";
+            pesan += "-----------------------------------\n";
+            pesan += `*TOTAL DIBAYAR: ${formatRupiah(totalHarga)}*\n\n`;
+            pesan += "📌 *Bukti transfer telah saya screenshot & dilampirkan.* Mohon segera diproses ya, terima kasih!";
 
             const pesanEncoded = encodeURIComponent(pesan);
             const waUrl = `https://wa.me/${whatsappNumber}?text=${pesanEncoded}`;
 
+            // Reset keranjang dan input form
             cart = [];
+            document.getElementById('tableNumber').value = '';
+            document.getElementById('orderNote').value = '';
             updateCartUI();
             closePaymentModal();
             window.open(waUrl, '_blank');
         });
 
-        // --- 4. DARK MODE TOGGLE ---
+        // --- 4. LOGIKA FITUR PENCARIAN MENU ---
+        const searchInput = document.getElementById('searchMenu');
+
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase().trim();
+
+            menuCards.forEach(card => {
+                const title = card.querySelector('.menu-name').textContent.toLowerCase();
+                
+                if (title.includes(keyword)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+
+        // --- 5. DARK MODE TOGGLE ---
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
 
@@ -1095,7 +1211,7 @@
             }
         });
 
-        // --- 5. FITUR MUSIK LATAR ---
+        // --- 6. FITUR MUSIK LATAR ---
         const musicBtn = document.getElementById('musicToggleBtn');
         const cafeAudio = document.getElementById('cafeMusic');
         const musicStatus = document.getElementById('musicStatus');
