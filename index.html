@@ -881,7 +881,7 @@
                     <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 0.9rem;">Scan QRIS / Transfer Bank</p>
                     <img src="QRSNastel.jpg" alt="QRIS Pembayaran" style="max-width: 180px; width: 100%; border-radius: 8px; margin-bottom: 8px;">
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        <strong>BCA:</strong> 1234-5678-90 a.n Warkop Nastel<br>
+                        <strong>BCA:</strong> -- a.n Warkop Nastel<br>
                         <strong>DANA/OVO:</strong> 0821-4588-5717
                     </div>
                 </div>
@@ -949,7 +949,25 @@
     </footer>
 
     <script>
-        const whatsappNumber = "6282145885717";
+
+        const whatsappNumber1 = "6282145885717";
+        const whatsappNumber2 = "6285215870526";
+       
+        // --- PENENTU SHIFT KASIR BERDASARKAN JAM --- 
+
+        function getActiveKasirNumber() {
+            const currentHour = new Date().getHours(); // Jam 0 s/d 23
+
+            // Pembagian Jam Shift:
+            // Shift Pagi: Jam 08.00 - 16.00 (Kasir 1)
+            // Shift Malam: Jam 16.00 - 07.59 (Kasir 2)
+            if (currentHour >= 8 && currentHour < 16) {
+                return "6282145885717"; // Nomor WA Kasir 1 (Shift Pagi)
+            } else {
+                return "6285215870526"; // Ganti dengan Nomor WA Kasir 2 (Shift Malam)
+            }
+        }
+
 
         // --- 1. MODAL DETAIL PRODUK ---
         const menuCards = document.querySelectorAll('.menu-card');
