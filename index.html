@@ -1168,30 +1168,41 @@
             if (e.target === paymentModal) closePaymentModal();
         });
 
-        // Kirim konfirmasi pembayaran + detail meja & catatan ke WhatsApp
-        confirmPaymentBtn.addEventListener('click', () => {
-            const tableNum = document.getElementById('tableNumber').value.trim() || "Tidak diisi";
-            const note = document.getElementById('orderNote').value.trim() || "Tidak ada";
+// Kirim konfirmasi pembayaran + detail meja & catatan ke WhatsApp
+confirmPaymentBtn.addEventListener('click', () => {
+    const tableNum = document.getElementById('tableNumber').value.trim() || "Tidak diisi";
+    const note = document.getElementById('orderNote').value.trim() || "Tidak ada";
 
-            let pesan = "🚨 *PESANAN BARU (SUDAH TRANSFER)* 🚨\n\n";
-            pesan += `📍 *No. Meja/Lokasi:* ${tableNum}\n`;
-            pesan += `📝 *Catatan Khusus:* ${note}\n\n`;
-            pesan += "-----------------------------------\n";
-            pesan += "*Rincian Pesanan:*\n";
+    let pesan = "🚨 *PESANAN BARU (SUDAH TRANSFER)* 🚨\n\n";
+    pesan += `📍 *No. Meja/Lokasi:* ${tableNum}\n`;
+    pesan += `📝 *Catatan Khusus:* ${note}\n\n`;
+    pesan += "-----------------------------------\n";
+    pesan += "*Rincian Pesanan:*\n";
 
-            cart.forEach((item, index) => {
-                const subtotal = item.price * item.qty;
-                pesan += `${index + 1}. ${item.title} (${item.qty}x) = ${formatRupiah(subtotal)}\n`;
-            });
+    cart.forEach((item, index) => {
+        const subtotal = item.price * item.qty;
+        pesan += `${index + 1}. ${item.title} (${item.qty}x) = ${formatRupiah(subtotal)}\n`;
+    });
 
-            const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            pesan += "-----------------------------------\n";
-            pesan += `*TOTAL DIBAYAR: ${formatRupiah(totalHarga)}*\n\n`;
-            pesan += "📌 *Bukti transfer telah saya screenshot & dilampirkan.* Mohon segera diproses ya, terima kasih!";
+    const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    pesan += "-----------------------------------\n";
+    pesan += `*TOTAL DIBAYAR: ${formatRupiah(totalHarga)}*\n\n`;
+    pesan += "📌 *Bukti transfer telah saya screenshot & dilampirkan.* Mohon segera diproses ya, terima kasih!";
 
-            const pesanEncoded = encodeURIComponent(pesan);
-            const targetWA = getActiveKasirNumber();
-            const waUrl = `https://wa.me/${targetWA}?text=${pesanEncoded}`;
+    const pesanEncoded = encodeURIComponent(pesan);
+    const targetWA = getActiveKasirNumber();
+    const waUrl = `https://wa.me/${targetWA}?text=${pesanEncoded}`;
+
+    // 1. DIBUKA TERLEBIH DAHULU (mencegah pemblokiran pop-up browser di GitHub Pages)
+    window.open(waUrl, '_blank');
+
+    // 2. BARU RESET KERANJANG DAN INPUT FORM
+    cart = [];
+    document.getElementById('tableNumber').value = '';
+    document.getElementById('orderNote').value = '';
+    updateCartUI();
+    closePaymentModal();
+});
 
             // Reset keranjang dan input form
             cart = [];
