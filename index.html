@@ -872,14 +872,18 @@
             <button class="modal-close" id="paymentModalClose">&times;</button>
             <div class="modal-body" style="text-align: center;">
                 <h3 class="modal-title">Pembayaran Pesanan</h3>
-                <p style="font-size: 0.9rem; color: var(--text-muted);">Silakan transfer sesuai total tagihan di bawah ini:</p>
-                
-                <div id="paymentTotal" style="font-size: 1.4rem; font-weight: bold; color: var(--accent); margin: 10px 0;">Rp 0</div>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Silakan transfer sesuai total tagihan di bawah
+                    ini:</p>
+
+                <div id="paymentTotal"
+                    style="font-size: 1.4rem; font-weight: bold; color: var(--accent); margin: 10px 0;">Rp 0</div>
 
                 <!-- Area QRIS atau Rekening -->
-                <div style="background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--border-color);">
+                <div
+                    style="background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--border-color);">
                     <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 0.9rem;">Scan QRIS / Transfer Bank</p>
-                    <img src="QRSNastel.jpg" alt="QRIS Pembayaran" style="max-width: 180px; width: 100%; border-radius: 8px; margin-bottom: 8px;">
+                    <img src="QRSNastel.jpg" alt="QRIS Pembayaran"
+                        style="max-width: 180px; width: 100%; border-radius: 8px; margin-bottom: 8px;">
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
                         <strong>BCA:</strong> -- a.n Warkop Nastel<br>
                         <strong>DANA/OVO:</strong> 0821-4588-5717
@@ -887,11 +891,14 @@
                 </div>
 
                 <!-- INPUT UPLOAD BUKTI TRANSFER -->
-                <div style="margin-bottom: 20px; text-align: left; background: var(--bg-color); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
-                    <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 6px; color: var(--text-main);">
+                <div
+                    style="margin-bottom: 20px; text-align: left; background: var(--bg-color); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <label
+                        style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 6px; color: var(--text-main);">
                         Upload Bukti Pembayaran (Wajib):
                     </label>
-                    <input type="file" id="proofInput" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+                    <input type="file" id="proofInput" accept="image/*"
+                        style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
                 </div>
 
                 <p style="font-size: 0.8rem; color: #ef4444; margin-bottom: 20px;">
@@ -899,7 +906,8 @@
                 </p>
 
                 <div class="modal-footer" style="justify-content: center;">
-                    <button id="confirmPaymentBtn" disabled style="background-color: #9ca3af; color: white; border: none; padding: 12px 20px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: not-allowed; width: 100%; transition: all 0.3s ease;">
+                    <button id="confirmPaymentBtn" disabled
+                        style="background-color: #9ca3af; color: white; border: none; padding: 12px 20px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: not-allowed; width: 100%; transition: all 0.3s ease;">
                         🔒 Upload Bukti Bayar Dahulu
                     </button>
                 </div>
@@ -924,7 +932,9 @@
             <!-- INPUT NOMOR MEJA & CATATAN PESANAN -->
             <div class="cart-inputs">
                 <input type="text" id="tableNumber" class="cart-field" placeholder="📍 Nomor Meja / Duduk di mana?">
-                <textarea id="orderNote" class="cart-field" rows="2" placeholder="📝 Catatan khusus (misal: pedas setengah matang, es teh sedikit gula)" style="resize: vertical;"></textarea>
+                <textarea id="orderNote" class="cart-field" rows="2"
+                    placeholder="📝 Catatan khusus (misal: pedas setengah matang, es teh sedikit gula)"
+                    style="resize: vertical;"></textarea>
             </div>
 
             <div class="cart-total-price">
@@ -952,16 +962,16 @@
 
         const whatsappNumber1 = "6282145885717";
         const whatsappNumber2 = "6285215870526";
-       
+
         // --- PENENTU SHIFT KASIR BERDASARKAN JAM --- 
 
         function getActiveKasirNumber() {
             const currentHour = new Date().getHours(); // Jam 0 s/d 23
 
             // Pembagian Jam Shift:
-            // Shift Pagi: Jam 08.00 - 16.00 (Kasir 1)
-            // Shift Malam: Jam 16.00 - 07.59 (Kasir 2)
-            if (currentHour >= 8 && currentHour < 16) {
+            // Shift Pagi: Jam 08.00 - 20.00(Kasir 1)
+            // Shift Malam: Jam 20.00 - 07.59 (Kasir 2)
+            if (currentHour >= 8 && currentHour < 20) {
                 return "6282145885717"; // Nomor WA Kasir 1 (Shift Pagi)
             } else {
                 return "6285215870526"; // Ganti dengan Nomor WA Kasir 2 (Shift Malam)
@@ -1180,7 +1190,8 @@
             pesan += "📌 *Bukti transfer telah saya screenshot & dilampirkan.* Mohon segera diproses ya, terima kasih!";
 
             const pesanEncoded = encodeURIComponent(pesan);
-            const waUrl = `https://wa.me/${whatsappNumber}?text=${pesanEncoded}`;
+            const targetWA = getActiveKasirNumber();
+            const waUrl = `https://wa.me/${targetWA}?text=${pesanEncoded}`;
 
             // Reset keranjang dan input form
             cart = [];
@@ -1199,7 +1210,7 @@
 
             menuCards.forEach(card => {
                 const title = card.querySelector('.menu-name').textContent.toLowerCase();
-                
+
                 if (title.includes(keyword)) {
                     card.style.display = "flex";
                 } else {
