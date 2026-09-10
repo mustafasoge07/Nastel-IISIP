@@ -568,6 +568,454 @@
                 box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
             }
         }
+
+        /* ===== MODERN WARKOP NASTEL UI ===== */
+        :root {
+            --bg-color: #f5f7fb;
+            --card-bg: rgba(255, 255, 255, .94);
+            --text-main: #111827;
+            --text-muted: #667085;
+            --primary: #f4c400;
+            --primary-hover: #dfb300;
+            --accent: #111827;
+            --accent-hover: #000;
+            --border-color: #e8ebf0;
+            --shadow: 0 10px 30px rgba(16, 24, 40, .07);
+            --shadow-hover: 0 18px 42px rgba(16, 24, 40, .14);
+        }
+
+        body.dark-mode {
+            --bg-color: #090d14;
+            --card-bg: rgba(17, 24, 39, .95);
+            --text-main: #f8fafc;
+            --text-muted: #9aa5b5;
+            --primary: #f5c400;
+            --primary-hover: #ffd83d;
+            --accent: #f8fafc;
+            --accent-hover: #e5e7eb;
+            --border-color: #273244;
+            --shadow: 0 12px 35px rgba(0, 0, 0, .28);
+            --shadow-hover: 0 20px 45px rgba(0, 0, 0, .42);
+        }
+
+        body {
+            max-width: 1180px;
+            padding: 18px 22px 90px;
+            background: radial-gradient(circle at 10% 0%, rgba(244, 196, 0, .12), transparent 28rem),
+                radial-gradient(circle at 90% 10%, rgba(37, 99, 235, .08), transparent 25rem), var(--bg-color);
+        }
+
+        .header-top {
+            margin-bottom: 10px
+        }
+
+        .btn-theme {
+            border-radius: 14px;
+            padding: 9px 14px
+        }
+
+        .hero {
+            position: relative;
+            padding: 34px 24px 30px;
+            margin-bottom: 22px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(255, 249, 216, .75));
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        body.dark-mode .hero {
+            background: linear-gradient(135deg, rgba(17, 24, 39, .96), rgba(50, 43, 15, .72))
+        }
+
+        .hero:after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            right: -70px;
+            top: -70px;
+            background: rgba(244, 196, 0, .18)
+        }
+
+        .profil-img {
+            width: 112px;
+            height: 112px;
+            object-fit: cover;
+            border: 5px solid rgba(255, 255, 255, .8);
+            margin-bottom: 14px
+        }
+
+        .hero h1 {
+            margin: 0 0 7px;
+            font-size: clamp(1.8rem, 4vw, 2.7rem);
+            letter-spacing: -.04em
+        }
+
+        .intro-text {
+            font-size: .98rem;
+            max-width: 650px
+        }
+
+        .search-container {
+            max-width: 720px;
+            margin: 20px auto 0;
+            position: relative
+        }
+
+        .search-input {
+            padding: 15px 48px 15px 20px;
+            border-radius: 17px;
+            box-shadow: 0 8px 25px rgba(16, 24, 40, .07);
+            font-size: 15px
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--border-color);
+            color: var(--text-main);
+            cursor: pointer;
+            display: none
+        }
+
+        .quick-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 720px;
+            margin: 18px auto 0
+        }
+
+        .quick-info div {
+            padding: 11px 10px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, .65);
+            border: 1px solid rgba(255, 255, 255, .7);
+            font-size: .82rem;
+            font-weight: 700
+        }
+
+        body.dark-mode .quick-info div {
+            background: rgba(255, 255, 255, .04);
+            border-color: var(--border-color)
+        }
+
+        nav {
+            top: 10px;
+            margin: 12px 0 20px;
+            padding: 7px;
+            border-radius: 18px;
+            justify-content: flex-start;
+            overflow: auto;
+            backdrop-filter: blur(14px)
+        }
+
+        nav a {
+            flex: 0 0 auto;
+            padding: 9px 14px;
+            border-radius: 12px
+        }
+
+        .menu-tools {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 0 16px;
+            flex-wrap: wrap
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            overflow: auto;
+            padding: 2px 0 6px
+        }
+
+        .filter-chip {
+            flex: 0 0 auto;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 9px 14px;
+            border-radius: 999px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .filter-chip.active,
+        .filter-chip:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #111
+        }
+
+        .sort-select {
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 9px 12px;
+            border-radius: 12px;
+            outline: none;
+            font: inherit
+        }
+
+        .category-title {
+            font-size: 1.35rem;
+            border-bottom: 0;
+            padding: 0;
+            margin: 34px 0 15px
+        }
+
+        .category-title:after {
+            content: "";
+            height: 3px;
+            width: 45px;
+            background: var(--primary);
+            display: block;
+            border-radius: 10px;
+            margin-top: 6px
+        }
+
+        .menu-grid {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 17px
+        }
+
+        .menu-card {
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            transition: transform .25s, box-shadow .25s, border-color .25s
+        }
+
+        .menu-card:hover {
+            transform: translateY(-7px);
+            box-shadow: var(--shadow-hover)
+        }
+
+        .menu-card img {
+            aspect-ratio: 1.15/1;
+            transition: transform .45s
+        }
+
+        .menu-card:hover img {
+            transform: scale(1.035)
+        }
+
+        .menu-info {
+            padding: 15px
+        }
+
+        .menu-name {
+            font-size: 1rem;
+            line-height: 1.35
+        }
+
+        .menu-price {
+            font-size: 1rem;
+            font-weight: 800
+        }
+
+        .btn-beli {
+            border-radius: 12px;
+            padding: 9px 14px;
+            background: var(--primary);
+            color: #111
+        }
+
+        .menu-card.hidden-by-filter {
+            display: none !important
+        }
+
+        .no-results {
+            display: none;
+            text-align: center;
+            padding: 40px 15px;
+            color: var(--text-muted);
+            border: 1px dashed var(--border-color);
+            border-radius: 18px
+        }
+
+        .modal-overlay {
+            background: rgba(3, 7, 18, .72);
+            backdrop-filter: blur(9px)
+        }
+
+        .modal-content {
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, .35)
+        }
+
+        .modal-img {
+            height: 270px
+        }
+
+        .modal-body {
+            padding: 22px
+        }
+
+        #modalBuyBtn,
+        .btn-checkout {
+            border-radius: 13px
+        }
+
+        .floating-cart-btn {
+            bottom: 22px;
+            right: 22px;
+            border-radius: 16px;
+            padding: 13px 17px;
+            background: #111827;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .22)
+        }
+
+        body.dark-mode .floating-cart-btn {
+            background: #f5c400;
+            color: #111
+        }
+
+        .cart-drawer {
+            width: min(410px, 94vw);
+            right: -430px;
+            box-shadow: -20px 0 55px rgba(0, 0, 0, .2)
+        }
+
+        .cart-item {
+            padding: 12px 0;
+            margin-bottom: 5px
+        }
+
+        .btn-qty {
+            border-radius: 9px;
+            padding: 5px 10px
+        }
+
+        .cart-field {
+            border-radius: 12px;
+            padding: 11px 12px
+        }
+
+        .btn-checkout {
+            padding: 13px
+        }
+
+        .floating-music-btn {
+            bottom: 82px;
+            right: 22px;
+            border-radius: 14px;
+            background: #111827;
+            padding: 11px 15px
+        }
+
+        body.dark-mode .floating-music-btn {
+            background: #374151
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translate(-50%, 20px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 3000;
+            background: #111827;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 13px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, .25);
+            font-weight: 700;
+            transition: .25s;
+            max-width: calc(100vw - 30px);
+            text-align: center
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0)
+        }
+
+        .item-badge {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            background: rgba(17, 24, 39, .88);
+            color: #fff;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: .7rem;
+            font-weight: 800;
+            z-index: 2
+        }
+
+        @media(max-width:650px) {
+            body {
+                padding: 10px 12px 90px
+            }
+
+            .hero {
+                padding: 27px 15px 22px;
+                border-radius: 24px
+            }
+
+            .profil-img {
+                width: 92px;
+                height: 92px
+            }
+
+            nav {
+                top: 7px
+            }
+
+            .menu-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 11px
+            }
+
+            .menu-card {
+                border-radius: 16px
+            }
+
+            .menu-info {
+                padding: 11px
+            }
+
+            .menu-name {
+                font-size: .88rem
+            }
+
+            .menu-price {
+                font-size: .88rem
+            }
+
+            .btn-beli {
+                padding: 7px 10px;
+                font-size: 12px
+            }
+
+            .quick-info {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .quick-info div:last-child {
+                grid-column: 1/-1
+            }
+        }
+
+        @media(max-width:390px) {
+            .menu-grid {
+                grid-template-columns: 1fr
+            }
+        }
     </style>
 </head>
 
@@ -587,16 +1035,48 @@
         <div class="search-container">
             <input type="text" id="searchMenu" class="search-input" placeholder="🔍 Cari menu makanan atau minuman...">
         </div>
+        <div class="quick-info" aria-label="Informasi cepat">
+            <div>Cara Pesan : :</div>
+        </div>
+        <div class="quick-info" aria-label="Informasi cepat">
+            <div>1. 🍽️ <strong>Pilihan Item yang Kalian Mau</strong></div>
+        </div>
+        <div class="quick-info" aria-label="Informasi cepat">
+            <div>2. 💳 <strong>QRIS & Transfer</strong></div>
+        </div>
+        <div class="quick-info" aria-label="Informasi cepat">
+            <div>3. 📲 <strong>Save Bukti Pembayaran & Lampirkan Konfirmasi WhatsApp</strong></div>
+        </div>
     </header>
 
     <nav>
-        <a href="#makanan">Makanan 🍛</a>
-        <a href="#minuman">Minuman ☕</a>
+        <a href="#makanan"><strong>Makanan 🍛</strong></a>
     </nav>
+    <nav>
+        <a href="#minuman"><strong>Minuman ☕</strong></a>
+    </nav>
+
+    <div class="menu-tools" aria-label="Filter dan pengurutan menu">
+        <div class="filter-chips">
+            <button class="filter-chip active" data-filter="all" type="button">Semua</button>
+            <button class="filter-chip" data-filter="makanan" type="button">🍛 Makanan</button>
+            <button class="filter-chip" data-filter="minuman" type="button">☕ Minuman</button>
+        </div>
+        <select id="sortMenu" class="sort-select" aria-label="Urutkan menu">
+            <option value="default">Urutan menu</option>
+            <option value="low">Harga terendah</option>
+            <option value="high">Harga tertinggi</option>
+            <option value="az">Nama A–Z</option>
+        </select>
+    </div>
+    <div id="noResults" class="no-results">
+        <div style="font-size:2rem">🔎</div><strong>Menu tidak ditemukan</strong>
+        <div>Coba kata kunci lain atau kategori berbeda.</div>
+    </div>
 
     <main>
         <!-- SEKSI MAKANAN -->
-        <section id="makanan">
+        <section id="makanan" data-category="makanan">
             <h2 class="category-title">🍛 Menu Makanan</h2>
             <div class="menu-grid">
                 <div class="menu-card">
@@ -605,7 +1085,7 @@
                         <h3 class="menu-name">Mie Tek Tek</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 15.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -616,7 +1096,7 @@
                         <h3 class="menu-name">Nasi Ancur</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 15.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -627,7 +1107,7 @@
                         <h3 class="menu-name">Aneka Indomie</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 8.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -638,7 +1118,7 @@
                         <h3 class="menu-name">Aneka Indomie + Telur</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 12.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -649,7 +1129,7 @@
                         <h3 class="menu-name">Nasi Telur</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 12.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -660,7 +1140,7 @@
                         <h3 class="menu-name">Nasi Goreng / Nasi Goreng Kampung</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 15.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -671,7 +1151,7 @@
                         <h3 class="menu-name">Omelette</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 14.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -682,7 +1162,7 @@
                         <h3 class="menu-name">Omelette + Nasi</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 15.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -693,7 +1173,7 @@
                         <h3 class="menu-name">Kwetiau Goreng</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 15.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -704,7 +1184,7 @@
                         <h3 class="menu-name">Otak-Otak</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 13.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -715,7 +1195,7 @@
                         <h3 class="menu-name">Sosis Goreng</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 13.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -726,7 +1206,7 @@
                         <h3 class="menu-name">Nastel / Magelangan</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 15.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -734,7 +1214,7 @@
         </section>
 
         <!-- SEKSI MINUMAN -->
-        <section id="minuman">
+        <section id="minuman" data-category="minuman">
             <h2 class="category-title">☕ Menu Minuman</h2>
             <div class="menu-grid">
                 <div class="menu-card">
@@ -743,7 +1223,7 @@
                         <h3 class="menu-name">Aneka kopi ABC (Panas)</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 4.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -754,7 +1234,7 @@
                         <h3 class="menu-name">ABC Klepon (Panas)</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 5.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -765,7 +1245,7 @@
                         <h3 class="menu-name">ABC Klepon (Es)</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 7.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -776,7 +1256,7 @@
                         <h3 class="menu-name">Kopi Kapal Api (Panas)</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 5.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -787,7 +1267,7 @@
                         <h3 class="menu-name">Kopi Liong (Panas)</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 5.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -798,7 +1278,7 @@
                         <h3 class="menu-name">Aneka Teajus</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 3.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -809,7 +1289,7 @@
                         <h3 class="menu-name">Aneka Good Day Panas</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 5.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -820,7 +1300,7 @@
                         <h3 class="menu-name">Aneka Good Day Dingin</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 8.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -831,7 +1311,7 @@
                         <h3 class="menu-name">Milo Dingin</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 8.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -842,7 +1322,7 @@
                         <h3 class="menu-name">Teh Manis Panas/Dingin</h3>
                         <div class="menu-footer">
                             <span class="menu-price">Rp 5.000</span>
-                            <button class="btn-beli">Beli</button>
+                            <button class="btn-beli" type="button">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
@@ -872,7 +1352,8 @@
             <button class="modal-close" id="paymentModalClose" aria-label="Tutup Pembayaran Modal">&times;</button>
             <div class="modal-body" style="text-align: center;">
                 <h3 class="modal-title">Pembayaran Pesanan</h3>
-                <p style="font-size: 0.9rem; color: var(--text-muted);">Silakan transfer sesuai total tagihan di bawah ini:</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Silakan transfer sesuai total tagihan di bawah
+                    ini:</p>
 
                 <div id="paymentTotal"
                     style="font-size: 1.4rem; font-weight: bold; color: var(--accent); margin: 10px 0;">Rp 0</div>
@@ -885,7 +1366,7 @@
                         style="max-width: 180px; width: 100%; border-radius: 8px; margin-bottom: 8px;">
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
                         <strong>BCA:</strong> -- a.n Warkop Nastel<br>
-                        <strong>DANA:</strong> 089520282150 a.n alan
+                        <strong>DANA:</strong> 089520282150 a.n Alan
                     </div>
                 </div>
 
@@ -946,15 +1427,17 @@
 
     <!-- ELEMEN AUDIO & TOMBOL MUSIK -->
     <audio id="cafeMusic" loop>
-        <source src="musik/TRAUMA.mp3" type="audio/mpeg">
+        <source src="https://yd7w2jisc1.ufs.sh/f/wapzI9nlPD9GIwqpjCH4hpx7QoZbWKgS6fN2GFzyCjMqsiA9" type="audio/mpeg">
     </audio>
 
     <button id="musicToggleBtn" class="floating-music-btn" aria-label="Play/Pause Music">
         🎵 <span id="musicStatus">Play Music</span>
     </button>
 
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
     <footer>
-        <p>&copy; 2026 Warkop Nastel IISIP. All rights reserved.</p>
+        <p>© 2026 <strong>Warkop Nastel IISIP</strong> · Pesan mudah, santai, langsung ke kasir.</p>
     </footer>
 
     <script>
@@ -1194,67 +1677,127 @@
             closePaymentModal();
         });
 
-        // --- 4. LOGIKA FITUR PENCARIAN MENU ---
+        // --- 4. PENCARIAN, FILTER & SORT MENU ---
         const searchInput = document.getElementById('searchMenu');
+        const sortMenu = document.getElementById('sortMenu');
+        const filterChips = document.querySelectorAll('.filter-chip');
+        const noResults = document.getElementById('noResults');
+        const sections = [...document.querySelectorAll('main section[data-category]')];
 
-        searchInput.addEventListener('input', (e) => {
-            const keyword = e.target.value.toLowerCase().trim();
-
-            menuCards.forEach(card => {
-                const title = card.querySelector('.menu-name').textContent.toLowerCase();
-
-                if (title.includes(keyword)) {
-                    card.style.display = "flex";
-                } else {
-                    card.style.display = "none";
-                }
-            });
+        sections.forEach(section => {
+            const grid = section.querySelector('.menu-grid');
+            [...grid.children].forEach((card, i) => card.dataset.originalOrder = i);
         });
 
-        // --- 5. DARK MODE TOGGLE ---
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
+        function applyMenuView() {
+            const keyword = searchInput.value.toLowerCase().trim();
+            const activeFilter = document.querySelector('.filter-chip.active')?.dataset.filter || 'all';
+            const sort = sortMenu.value;
+            let visibleCount = 0;
 
-        if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-mode');
-            themeToggle.textContent = '☀️ Mode Terang';
+            sections.forEach(section => {
+                const category = section.dataset.category;
+                const grid = section.querySelector('.menu-grid');
+                const cards = [...grid.querySelectorAll('.menu-card')];
+
+                cards.sort((a, b) => {
+                    if (sort === 'low' || sort === 'high') {
+                        const pa = parsePrice(a.querySelector('.menu-price').textContent);
+                        const pb = parsePrice(b.querySelector('.menu-price').textContent);
+                        return sort === 'low' ? pa - pb : pb - pa;
+                    }
+                    if (sort === 'az') return a.querySelector('.menu-name').textContent.localeCompare(b.querySelector('.menu-name').textContent, 'id');
+                    return Number(a.dataset.originalOrder) - Number(b.dataset.originalOrder);
+                }).forEach(card => grid.appendChild(card));
+
+                section.style.display = (activeFilter === 'all' || activeFilter === category) ? '' : 'none';
+                if (section.style.display === 'none') return;
+
+                cards.forEach(card => {
+                    const title = card.querySelector('.menu-name').textContent.toLowerCase();
+                    const match = title.includes(keyword);
+                    card.classList.toggle('hidden-by-filter', !match);
+                    if (match) visibleCount++;
+                });
+            });
+
+            noResults.style.display = visibleCount ? 'none' : 'block';
+            document.querySelector('.search-clear').style.display = keyword ? 'block' : 'none';
         }
 
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
+        searchInput.addEventListener('input', applyMenuView);
+        sortMenu.addEventListener('change', applyMenuView);
 
-            if (body.classList.contains('dark-mode')) {
-                themeToggle.textContent = '☀️ Mode Terang';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeToggle.textContent = '🌙 Mode Gelap';
-                localStorage.setItem('theme', 'light');
+        filterChips.forEach(chip => chip.addEventListener('click', () => {
+            filterChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            applyMenuView();
+            if (chip.dataset.filter !== 'all') {
+                document.querySelector('#' + chip.dataset.filter)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+        }));
+
+        const searchBox = document.querySelector('.search-container');
+        const clearSearch = document.createElement('button');
+        clearSearch.className = 'search-clear'; clearSearch.type = 'button'; clearSearch.textContent = '×';
+        clearSearch.setAttribute('aria-label', 'Hapus pencarian');
+        searchBox.appendChild(clearSearch);
+        clearSearch.addEventListener('click', () => { searchInput.value = ''; applyMenuView(); searchInput.focus(); });
+
+        // --- 5. DARK MODE PERSISTEN ---
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode'); themeToggle.textContent = '☀️ Mode Terang';
+        }
+        themeToggle.addEventListener('click', () => {
+            const dark = body.classList.toggle('dark-mode');
+            themeToggle.textContent = dark ? '☀️ Mode Terang' : '🌙 Mode Gelap';
+            localStorage.setItem('theme', dark ? 'dark' : 'light');
         });
 
-        // --- 6. FITUR MUSIK LATAR ---
+        // --- 6. TOAST FEEDBACK & BADGE KARTU ---
+        const toast = document.getElementById('toast');
+        let toastTimer;
+        function showToast(message) {
+            clearTimeout(toastTimer); toast.textContent = message; toast.classList.add('show');
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+        const originalAddToCart = addToCart;
+        addToCart = function (title, priceStr) {
+            originalAddToCart(title, priceStr);
+            showToast(`✅ ${title} ditambahkan ke keranjang`);
+        };
+        menuCards.forEach(card => {
+            const badge = document.createElement('span');
+            badge.className = 'item-badge'; badge.textContent = 'MENU NASTEL';
+            card.appendChild(badge);
+        });
+        applyMenuView();
+
+        // --- 7. FITUR MUSIK LATAR ---
         const musicBtn = document.getElementById('musicToggleBtn');
         const cafeAudio = document.getElementById('cafeMusic');
         const musicStatus = document.getElementById('musicStatus');
         let isMusicPlaying = false;
+        cafeAudio.volume = 0.55;
 
-        cafeAudio.volume = 1;
-
-        musicBtn.addEventListener('click', () => {
+        musicBtn.addEventListener('click', async () => {
             if (isMusicPlaying) {
-                cafeAudio.pause();
-                musicStatus.textContent = "Play Music";
-                musicBtn.classList.remove('playing');
-                isMusicPlaying = false;
-            } else {
-                cafeAudio.play().then(() => {
-                    musicStatus.textContent = "Pause Music";
-                    musicBtn.classList.add('playing');
-                    isMusicPlaying = true;
-                }).catch(error => {
-                    console.error("Gagal memutar audio:", error);
-                    alert("Gagal memutar musik. Pastikan file 'musik/TRAUMA.mp3' ada di dalam folder proyek Anda.");
-                });
+                cafeAudio.pause(); musicStatus.textContent = "Play Music";
+                musicBtn.classList.remove('playing'); isMusicPlaying = false; return;
+            }
+            try {
+                await cafeAudio.play();
+                musicStatus.textContent = "Pause Music"; musicBtn.classList.add('playing'); isMusicPlaying = true;
+            } catch (error) {
+                showToast("⚠️ Musik gagal diputar. Pastikan musik/TRAUMA.mp3 tersedia.");
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal(); closePaymentModal(); cartDrawer.classList.remove('active');
             }
         });
     </script>
