@@ -2200,7 +2200,7 @@
 
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height:1.5;">
                     <strong>📸 Bukti pembayaran divalidasi & dikompres sebelum disimpan.</strong><br>
-                    Mode lokal menyimpan bukti maksimal 30 hari. Saat Supabase aktif, retensi 30 hari akan diterapkan pada Storage tanpa menghapus data transaksinya.
+                    Bukti pembayaran disimpan private di Supabase. Setelah transaksi benar-benar final, bukti dijadwalkan terhapus otomatis dalam 14 hari; data transaksinya tetap tersimpan.
                 </p>
 
                 <div class="modal-footer" style="justify-content: center;">
@@ -2517,7 +2517,7 @@
         const MAX_PROOF_BYTES = 5 * 1024 * 1024;
         const TARGET_PROOF_BYTES = 300 * 1024;
         const MAX_UPLOAD_PROOF_BYTES = 500 * 1024;
-        const PROOF_RETENTION_DAYS = 30;
+        const PROOF_RETENTION_DAYS = 14;
         let preparedProofFile = null;
         let originalProofMeta = null;
 
@@ -2894,35 +2894,66 @@
             return `proofs/${p.yyyy}/${p.mm}/${p.dd}/${randomId}.${ext}`;
         }
 
+        const NASTEL_PUBLIC_CLIENT_ID_KEY = 'nastel_public_client_id';
+
+        function getOrCreatePublicClientId() {
+            let clientId = localStorage.getItem(NASTEL_PUBLIC_CLIENT_ID_KEY);
+            if (!clientId) {
+                clientId = crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                localStorage.setItem(NASTEL_PUBLIC_CLIENT_ID_KEY, clientId);
+            }
+            return clientId;
+        }
+
         async function createV2Order({ customerName, note, items, proofFile }) {
             if (!proofFile) throw new Error('Bukti pembayaran belum tersedia.');
-            if (proofFile.size > MAX_UPLOAD_PROOF_BYTES) throw new Error('Bukti pembayaran melebihi batas 500 KB setelah kompres.');
+            if (proofFile.size > MAX_UPLOAD_PROOF_BYTES) {
+                throw new Error('Bukti pembayaran melebihi batas 500 KB setelah kompres.');
+            }
 
-            const proofPath = makeProofObjectPath(proofFile);
-            const { error: uploadError } = await nastelSupabase.storage
-                .from('payment-proofs')
-                .upload(proofPath, proofFile, {
-                    contentType: proofFile.type || 'image/jpeg',
-                    cacheControl: '3600',
-                    upsert: false
-                });
-            if (uploadError) throw new Error(`Upload bukti gagal: ${uploadError.message}`);
+            const rpcItems = items.map(item => ({
+                name: item.title,
+                qty: Number(item.qty)
+            }));
 
-            const rpcItems = items.map(item => ({ name: item.title, qty: Number(item.qty) }));
-            const { data, error } = await nastelSupabase.rpc('create_public_order', {
-                p_customer_name: customerName,
-                p_note: note === 'Tidak ada' ? '' : note,
-                p_items: rpcItems,
-                p_proof_path: proofPath,
-                p_proof_name: proofFile.name || 'bukti-pembayaran.jpg',
-                p_proof_type: proofFile.type || 'image/jpeg',
-                p_proof_size: Number(proofFile.size || 0),
-                p_proof_original_size: Number(originalProofMeta?.size || proofFile.size || 0)
+            const form = new FormData();
+            form.append('customerName', customerName);
+            form.append('note', note === 'Tidak ada' ? '' : note);
+            form.append('items', JSON.stringify(rpcItems));
+            form.append('proof', proofFile, proofFile.name || 'bukti-pembayaran.jpg');
+            form.append(
+                'originalProofSize',
+                String(Number(originalProofMeta?.size || proofFile.size || 0))
+            );
+
+            const response = await fetch(`${NASTEL_SUPABASE_URL}/functions/v1/create-order`, {
+                method: 'POST',
+                headers: {
+                    apikey: NASTEL_SUPABASE_PUBLISHABLE_KEY,
+                    'x-client-id': getOrCreatePublicClientId()
+                },
+                body: form
             });
-            if (error) throw new Error(`Order gagal dibuat: ${error.message}`);
 
-            const row = Array.isArray(data) ? data[0] : data;
-            if (!row?.order_code || !row?.tracking_token) throw new Error('Supabase tidak mengembalikan nomor order.');
+            let payload = null;
+            try { payload = await response.json(); } catch (_) {}
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    const wait = Number(payload?.retryAfterSeconds || 0);
+                    throw new Error(wait
+                        ? `Terlalu banyak percobaan order. Coba lagi sekitar ${Math.ceil(wait / 60)} menit.`
+                        : 'Terlalu banyak percobaan order. Coba lagi beberapa menit.');
+                }
+                throw new Error(payload?.error || `Order gagal dibuat (HTTP ${response.status}).`);
+            }
+
+            const row = payload?.order;
+            if (!row?.order_code || !row?.tracking_token) {
+                throw new Error('Server tidak mengembalikan nomor order.');
+            }
 
             const order = {
                 dbId: row.order_id,
@@ -2930,21 +2961,30 @@
                 trackingToken: row.tracking_token,
                 customerName,
                 note,
-                items: items.map(item => ({ title: item.title, price: Number(item.price), qty: Number(item.qty) })),
+                items: items.map(item => ({
+                    title: item.title,
+                    price: Number(item.price),
+                    qty: Number(item.qty)
+                })),
                 total: Number(row.total || 0),
                 status: row.status || V2_STATUS_FLOW[0],
                 createdAt: row.created_at || new Date().toISOString(),
                 updatedAt: row.created_at || new Date().toISOString(),
                 payment: 'QRIS / Transfer',
                 paymentProof: true,
-                proofPath,
+                proofPath: row.proof_path || null,
                 proofName: proofFile.name || 'bukti-pembayaran.jpg',
                 proofType: proofFile.type || 'image/jpeg',
                 proofSize: Number(proofFile.size || 0),
                 proofOriginalSize: Number(originalProofMeta?.size || proofFile.size || 0),
                 proofRetentionDays: PROOF_RETENTION_DAYS,
-                proofExpiresAt: new Date(Date.now() + PROOF_RETENTION_DAYS * 86400000).toISOString(),
-                paymentStatus: row.payment_status || 'Menunggu verifikasi kasir'
+                proofExpiresAt: null,
+                paymentStatus: row.payment_status || 'Menunggu verifikasi kasir',
+                amountPaid: null,
+                cancellationStatus: 'Tidak ada',
+                cancellationReason: '',
+                refundStatus: 'Tidak ada',
+                refundAmount: 0
             };
 
             rememberTrackingToken(order.id, order.trackingToken);
@@ -2981,7 +3021,17 @@
                 proofOriginalSize: Number(row.proof_original_size || 0),
                 proofExpiresAt: row.proof_expires_at,
                 proofDeletedAt: row.proof_deleted_at,
-                proofRetentionDays: PROOF_RETENTION_DAYS
+                proofRetentionDays: PROOF_RETENTION_DAYS,
+                amountPaid: row.amount_paid == null ? null : Number(row.amount_paid),
+                paymentVerifiedAt: row.payment_verified_at,
+                cancellationStatus: row.cancellation_status || 'Tidak ada',
+                cancellationReason: row.cancellation_reason || '',
+                cancellationRequestedAt: row.cancellation_requested_at,
+                refundStatus: row.refund_status || 'Tidak ada',
+                refundAmount: Number(row.refund_amount || 0),
+                refundCompletedAt: row.refund_completed_at,
+                completedAt: row.completed_at,
+                cancelledAt: row.cancelled_at
             };
         }
 
@@ -2991,8 +3041,12 @@
                 .select(`
                     id, order_code, tracking_token, customer_name, note, total,
                     status, payment_status, payment_method,
+                    amount_paid, payment_verified_at,
+                    cancellation_status, cancellation_reason, cancellation_requested_at,
+                    refund_status, refund_amount, refund_completed_at,
                     proof_path, proof_name, proof_type, proof_size, proof_original_size,
-                    proof_expires_at, proof_deleted_at, created_at, updated_at,
+                    proof_expires_at, proof_deleted_at, completed_at, cancelled_at,
+                    created_at, updated_at,
                     order_items ( id, item_name, unit_price, qty, subtotal )
                 `)
                 .order('created_at', { ascending: false })
@@ -3029,7 +3083,21 @@
             if (status === 'Diproses') return { cls: 'processing', icon: '🔵' };
             if (status === 'Siap') return { cls: 'ready', icon: '🟢' };
             if (status === 'Selesai') return { cls: 'done', icon: '✅' };
+            if (status === 'Dibatalkan') return { cls: 'done', icon: '⛔' };
             return { cls: 'waiting', icon: '🟡' };
+        }
+
+        function paymentIsProcessable(order) {
+            return ['Pembayaran sesuai', 'Pembayaran lebih'].includes(order?.paymentStatus);
+        }
+
+        function paymentDifferenceText(order) {
+            const paid = order?.amountPaid;
+            if (paid == null) return '';
+            const diff = Number(paid) - Number(order.total || 0);
+            if (diff === 0) return `Nominal masuk ${formatRupiah(paid)} · sesuai`;
+            if (diff < 0) return `Nominal masuk ${formatRupiah(paid)} · kurang ${formatRupiah(Math.abs(diff))}`;
+            return `Nominal masuk ${formatRupiah(paid)} · lebih ${formatRupiah(diff)}`;
         }
 
         function formatOrderTime(iso) {
@@ -3099,6 +3167,12 @@
                     status: row.status,
                     paymentStatus: row.payment_status,
                     payment: row.payment_method,
+                    amountPaid: row.amount_paid == null ? null : Number(row.amount_paid),
+                    cancellationStatus: row.cancellation_status || 'Tidak ada',
+                    cancellationReason: row.cancellation_reason || '',
+                    refundStatus: row.refund_status || 'Tidak ada',
+                    refundAmount: Number(row.refund_amount || 0),
+                    refundCompletedAt: row.refund_completed_at,
                     total: Number(row.total || 0),
                     createdAt: row.created_at,
                     updatedAt: row.updated_at,
@@ -3119,7 +3193,12 @@
                         </div>
                         ${orderProgressHTML(order)}
                         ${orderItemsHTML(order)}
-                        <div class="v2-order-meta" style="margin-top:10px">💳 ${escapeHTML(order.paymentStatus || 'Menunggu verifikasi pembayaran')}</div>
+                        <div class="v2-order-meta" style="margin-top:10px">💳 <strong>${escapeHTML(order.paymentStatus || 'Menunggu verifikasi pembayaran')}</strong></div>
+                        ${paymentDifferenceText(order) ? `<div class="v2-order-meta" style="margin-top:4px">${escapeHTML(paymentDifferenceText(order))}</div>` : ''}
+                        ${order.cancellationStatus && order.cancellationStatus !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">🧾 Pembatalan: <strong>${escapeHTML(order.cancellationStatus)}</strong>${order.cancellationReason ? ` · ${escapeHTML(order.cancellationReason)}` : ''}</div>` : ''}
+                        ${order.refundStatus && order.refundStatus !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">↩️ Refund: <strong>${escapeHTML(order.refundStatus)}</strong>${order.refundAmount ? ` · ${formatRupiah(order.refundAmount)}` : ''}</div>` : ''}
+                        ${order.paymentStatus === 'Pembayaran kurang' ? `<div class="v2-wa-reminder pending">⚠️ Nominal pembayaran kurang. Hubungi kasir untuk menambah selisih atau ajukan pembatalan.</div>` : ''}
+                        ${order.paymentStatus === 'Pembayaran lebih' && order.refundStatus === 'Menunggu' ? `<div class="v2-wa-reminder pending">ℹ️ Ada kelebihan pembayaran. Order tetap dapat diproses, refund selisih sedang menunggu kasir.</div>` : ''}
                         ${order.note && order.note !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">Catatan: ${escapeHTML(order.note)}</div>` : ''}
                         <div class="v2-wa-reminder ${order.waOpenedAt ? '' : 'pending'}">
                             ${order.waOpenedAt
@@ -3129,6 +3208,9 @@
                         <div class="v2-track-actions">
                             <button class="v2-btn" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">💬 WhatsApp Kasir</button>
                             <button class="v2-btn secondary" type="button" onclick="renderTrackedOrder('${escapeHTML(order.id)}')">↻ Refresh Status</button>
+                            ${order.status === 'Menunggu Konfirmasi' && order.cancellationStatus === 'Tidak ada'
+                                ? `<button class="v2-btn danger" type="button" onclick="requestTrackedCancellation('${escapeHTML(order.id)}')">Ajukan Pembatalan</button>`
+                                : ''}
                         </div>
                     </div>`;
                 document.getElementById('trackOrderInput').value = order.id;
@@ -3145,6 +3227,35 @@
             if (lastId) renderTrackedOrder(lastId);
             else document.getElementById('orderTrackResult').innerHTML = '<div class="v2-empty-state">Belum ada pesanan online dari perangkat ini.</div>';
         });
+
+        window.requestTrackedCancellation = async function(orderId) {
+            const cleanId = String(orderId || '').trim().toUpperCase();
+            const trackingToken = getTrackingToken(cleanId);
+            if (!trackingToken) {
+                showToast('⚠️ Token tracking tidak tersedia di perangkat ini');
+                return;
+            }
+
+            const reason = prompt(
+                'Alasan pembatalan (opsional). Jika uang sudah masuk, pembatalan tidak langsung selesai karena refund harus diproses kasir:',
+                ''
+            );
+            if (reason === null) return;
+
+            try {
+                const { data, error } = await nastelSupabase.rpc('request_order_cancellation', {
+                    p_order_code: cleanId,
+                    p_tracking_token: trackingToken,
+                    p_reason: String(reason || '').slice(0, 300)
+                });
+                if (error) throw error;
+                showToast('🧾 Pengajuan pembatalan dikirim ke kasir');
+                await renderTrackedOrder(cleanId);
+            } catch (error) {
+                console.error('[Nastel] Pengajuan pembatalan gagal:', error);
+                showToast(`⚠️ ${error.message || 'Pengajuan pembatalan gagal'}`);
+            }
+        };
 
         function buildV2WhatsAppText(order) {
             const lines = [
@@ -3390,7 +3501,7 @@
             try {
                 await loadCashierOrders();
                 const todays = todayOrders();
-                const verifiedOrders = todays.filter(o => o.paymentStatus === 'Pembayaran dikonfirmasi');
+                const verifiedOrders = todays.filter(o => paymentIsProcessable(o) && o.status !== 'Dibatalkan');
                 document.getElementById('statOrders').textContent = todays.length;
                 document.getElementById('statRevenue').textContent = formatRupiah(verifiedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0));
                 document.getElementById('statActive').textContent = todays.filter(o => !['Selesai', 'Dibatalkan'].includes(o.status)).length;
@@ -3413,25 +3524,93 @@
             const wrap = document.getElementById('cashierOrders');
             let orders = [...supabaseOrdersCache];
             if (cashierFilter !== 'all') orders = orders.filter(o => o.status === cashierFilter);
+
             if (!orders.length) {
                 wrap.innerHTML = '<div class="v2-empty-state">Belum ada order pada filter ini.</div>';
                 return;
             }
+
             wrap.innerHTML = orders.map(order => {
                 const meta = statusMeta(order.status);
                 const idx = V2_STATUS_FLOW.indexOf(order.status);
                 const next = idx >= 0 && idx < V2_STATUS_FLOW.length - 1 ? V2_STATUS_FLOW[idx + 1] : null;
-                const nextLabel = order.status === 'Menunggu Konfirmasi' ? 'Terima & Proses' : order.status === 'Diproses' ? 'Tandai Siap' : order.status === 'Siap' ? 'Selesaikan' : '';
+                const nextLabel =
+                    order.status === 'Menunggu Konfirmasi' ? 'Mulai Proses' :
+                    order.status === 'Diproses' ? 'Tandai Siap' :
+                    order.status === 'Siap' ? 'Selesaikan' : '';
+
+                const canAdvance =
+                    order.status !== 'Menunggu Konfirmasi' ||
+                    (paymentIsProcessable(order) && order.cancellationStatus !== 'Diajukan');
+
+                const proofHtml = order.paymentProof
+                    ? `<div class="v2-proof-box">
+                        <div class="v2-proof-meta">
+                            <div style="font-size:1.7rem">📸</div>
+                            <div class="v2-proof-meta-text">
+                                <strong>Bukti pembayaran tersedia</strong>
+                                <small>${escapeHTML(order.proofName || 'Bukti pembayaran')} · ${order.proofSize ? formatFileSize(order.proofSize) : 'online'}${order.proofOriginalSize && order.proofOriginalSize > order.proofSize ? ` · dari ${formatFileSize(order.proofOriginalSize)}` : ''}</small>
+                            </div>
+                        </div>
+                        <button class="v2-btn secondary" type="button" onclick="viewV2PaymentProof('${order.dbId}')">Lihat Bukti</button>
+                    </div>`
+                    : order.proofDeletedAt
+                        ? `<div class="v2-proof-box" style="border-color:rgba(107,114,128,.3);background:rgba(107,114,128,.06)">
+                            <div class="v2-proof-meta"><div style="font-size:1.5rem">🗑️</div>
+                            <div class="v2-proof-meta-text"><strong>Bukti sudah dibersihkan</strong><small>Data transaksi tetap tersimpan.</small></div></div>
+                          </div>`
+                        : `<div class="v2-proof-box" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)">
+                            <div class="v2-proof-meta"><div style="font-size:1.5rem">⚠️</div>
+                            <div class="v2-proof-meta-text"><strong>Bukti belum tersedia</strong></div></div>
+                          </div>`;
+
+                const paymentInfo = `
+                    <div class="v2-note" style="margin:10px 0 0">
+                        💳 <strong>${escapeHTML(order.paymentStatus || 'Menunggu verifikasi kasir')}</strong>
+                        ${paymentDifferenceText(order) ? `<br><small>${escapeHTML(paymentDifferenceText(order))}</small>` : ''}
+                        ${order.refundStatus !== 'Tidak ada'
+                            ? `<br><small>↩️ Refund: <strong>${escapeHTML(order.refundStatus)}</strong>${order.refundAmount ? ` · ${formatRupiah(order.refundAmount)}` : ''}</small>`
+                            : ''}
+                        ${order.cancellationStatus !== 'Tidak ada'
+                            ? `<br><small>🧾 Pembatalan: <strong>${escapeHTML(order.cancellationStatus)}</strong>${order.cancellationReason ? ` · ${escapeHTML(order.cancellationReason)}` : ''}</small>`
+                            : ''}
+                    </div>`;
+
                 return `<div class="v2-cashier-order">
                     <div class="v2-order-card-top">
-                        <div><div class="v2-order-id">${escapeHTML(order.id)}</div><div class="v2-order-meta">${escapeHTML(getOrderCustomerLabel(order))} · ${formatOrderTime(order.createdAt)}</div></div>
+                        <div>
+                            <div class="v2-order-id">${escapeHTML(order.id)}</div>
+                            <div class="v2-order-meta">${escapeHTML(getOrderCustomerLabel(order))} · ${formatOrderTime(order.createdAt)}</div>
+                        </div>
                         <span class="v2-status ${meta.cls}">${meta.icon} ${escapeHTML(order.status)}</span>
                     </div>
+
                     ${orderItemsHTML(order)}
                     ${order.note && order.note !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:8px">📝 ${escapeHTML(order.note)}</div>` : ''}
-                    ${order.paymentProof ? `<div class="v2-proof-box"><div class="v2-proof-meta"><div style="font-size:1.7rem">📸</div><div class="v2-proof-meta-text"><strong>Bukti pembayaran tersedia</strong><small>${escapeHTML(order.proofName || 'Bukti pembayaran')} · ${order.proofSize ? formatFileSize(order.proofSize) : 'online'}${order.proofOriginalSize && order.proofOriginalSize > order.proofSize ? ` · dari ${formatFileSize(order.proofOriginalSize)}` : ''}</small></div></div><button class="v2-btn secondary" type="button" onclick="viewV2PaymentProof('${order.dbId}')">Lihat Bukti</button></div>` : order.proofDeletedAt ? `<div class="v2-proof-box" style="border-color:rgba(107,114,128,.3);background:rgba(107,114,128,.06)"><div class="v2-proof-meta"><div style="font-size:1.5rem">🗑️</div><div class="v2-proof-meta-text"><strong>Bukti sudah dibersihkan</strong><small>Data transaksi tetap tersimpan.</small></div></div></div>` : `<div class="v2-proof-box" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)"><div class="v2-proof-meta"><div style="font-size:1.5rem">⚠️</div><div class="v2-proof-meta-text"><strong>Bukti belum tersedia</strong></div></div></div>`}
+                    ${paymentInfo}
+                    ${proofHtml}
+
                     <div class="v2-cashier-actions">
-                        ${next ? `<button class="v2-btn" type="button" onclick="advanceV2Order('${order.dbId}')">${nextLabel}</button>` : ''}
+                        ${order.status === 'Menunggu Konfirmasi' && order.cancellationStatus !== 'Diajukan'
+                            ? `<button class="v2-btn secondary" type="button" onclick="verifyV2Payment('${order.dbId}')">💳 Verifikasi Nominal</button>
+                               <button class="v2-btn danger" type="button" onclick="rejectV2Payment('${order.dbId}')">Tolak Bukti</button>`
+                            : ''}
+
+                        ${order.cancellationStatus === 'Diajukan'
+                            ? `<button class="v2-btn danger" type="button" onclick="approveV2Cancellation('${order.dbId}')">Setujui Pembatalan</button>
+                               <button class="v2-btn secondary" type="button" onclick="rejectV2Cancellation('${order.dbId}')">Tolak Pembatalan</button>`
+                            : ''}
+
+                        ${order.refundStatus === 'Menunggu'
+                            ? `<button class="v2-btn secondary" type="button" onclick="completeV2Refund('${order.dbId}')">✅ Tandai Refund Selesai</button>`
+                            : ''}
+
+                        ${next && order.status !== 'Dibatalkan'
+                            ? `<button class="v2-btn" type="button" onclick="advanceV2Order('${order.dbId}')" ${canAdvance ? '' : 'disabled'}>
+                                ${canAdvance ? nextLabel : 'Verifikasi pembayaran dulu'}
+                               </button>`
+                            : ''}
+
                         <button class="v2-btn secondary" type="button" onclick="copyV2Order('${order.dbId}')">Salin Ringkasan</button>
                         <button class="v2-btn secondary" type="button" onclick="sendV2OrderWA('${order.dbId}')">WhatsApp</button>
                     </div>
@@ -3439,19 +3618,182 @@
             }).join('');
         }
 
+        window.verifyV2Payment = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
+            if (!order) return;
+
+            const input = prompt(
+                `Total order ${formatRupiah(order.total)}.\nMasukkan nominal yang BENAR-BENAR masuk ke rekening/e-wallet:`,
+                order.amountPaid == null ? String(order.total) : String(order.amountPaid)
+            );
+            if (input === null) return;
+
+            const paid = Math.round(Number(String(input).replace(/[^\d]/g, '')));
+            if (!Number.isFinite(paid) || paid < 0 || paid > 10000000) {
+                showToast('⚠️ Nominal pembayaran tidak valid');
+                return;
+            }
+
+            let paymentStatus = 'Pembayaran sesuai';
+            let refundStatus = order.refundStatus || 'Tidak ada';
+            let refundAmount = Number(order.refundAmount || 0);
+
+            if (paid < order.total) {
+                paymentStatus = 'Pembayaran kurang';
+                refundStatus = 'Tidak ada';
+                refundAmount = 0;
+            } else if (paid > order.total) {
+                paymentStatus = 'Pembayaran lebih';
+                refundStatus = 'Menunggu';
+                refundAmount = paid - order.total;
+            } else {
+                refundStatus = 'Tidak ada';
+                refundAmount = 0;
+            }
+
+            try {
+                const { error } = await nastelSupabase
+                    .from('orders')
+                    .update({
+                        amount_paid: paid,
+                        payment_status: paymentStatus,
+                        payment_verified_at: new Date().toISOString(),
+                        payment_confirmed_at: paymentStatus === 'Pembayaran sesuai' ? new Date().toISOString() : null,
+                        refund_status: refundStatus,
+                        refund_amount: refundAmount
+                    })
+                    .eq('id', dbId);
+                if (error) throw error;
+
+                showToast(
+                    paymentStatus === 'Pembayaran sesuai'
+                        ? '✅ Pembayaran sesuai'
+                        : paymentStatus === 'Pembayaran kurang'
+                            ? `⚠️ Pembayaran kurang ${formatRupiah(order.total - paid)}`
+                            : `ℹ️ Pembayaran lebih ${formatRupiah(paid - order.total)}`
+                );
+                await renderCashierDashboard();
+            } catch (error) {
+                console.error('[Nastel] Verifikasi pembayaran gagal:', error);
+                showToast('❌ Verifikasi pembayaran gagal');
+            }
+        };
+
+        window.rejectV2Payment = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
+            if (!order || !confirm(`Tolak bukti pembayaran ${order.id}?`)) return;
+            try {
+                const { error } = await nastelSupabase
+                    .from('orders')
+                    .update({
+                        payment_status: 'Pembayaran ditolak',
+                        amount_paid: null,
+                        payment_verified_at: new Date().toISOString(),
+                        payment_confirmed_at: null,
+                        refund_status: 'Tidak ada',
+                        refund_amount: 0
+                    })
+                    .eq('id', dbId);
+                if (error) throw error;
+                showToast('⛔ Bukti pembayaran ditolak');
+                await renderCashierDashboard();
+            } catch (error) {
+                console.error(error);
+                showToast('❌ Gagal menolak bukti');
+            }
+        };
+
+        window.approveV2Cancellation = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
+            if (!order || !confirm(`Setujui pembatalan ${order.id}?`)) return;
+
+            const paid = Number(order.amountPaid || 0);
+            const patch = {
+                cancellation_status: 'Disetujui',
+                status: 'Dibatalkan',
+                cancelled_at: new Date().toISOString()
+            };
+
+            if (paid > 0) {
+                patch.refund_status = 'Menunggu';
+                patch.refund_amount = paid;
+            } else {
+                patch.refund_status = 'Tidak ada';
+                patch.refund_amount = 0;
+            }
+
+            try {
+                const { error } = await nastelSupabase.from('orders').update(patch).eq('id', dbId);
+                if (error) throw error;
+                showToast(paid > 0 ? `↩️ Refund ${formatRupiah(paid)} perlu diproses` : '⛔ Order dibatalkan');
+                await renderCashierDashboard();
+            } catch (error) {
+                console.error(error);
+                showToast('❌ Pembatalan gagal diproses');
+            }
+        };
+
+        window.rejectV2Cancellation = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
+            if (!order || !confirm(`Tolak pengajuan pembatalan ${order.id}?`)) return;
+            try {
+                const { error } = await nastelSupabase
+                    .from('orders')
+                    .update({ cancellation_status: 'Ditolak' })
+                    .eq('id', dbId);
+                if (error) throw error;
+                showToast('Pembatalan ditolak');
+                await renderCashierDashboard();
+            } catch (error) {
+                console.error(error);
+                showToast('❌ Gagal memperbarui pembatalan');
+            }
+        };
+
+        window.completeV2Refund = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
+            if (!order || !confirm(`Pastikan refund ${formatRupiah(order.refundAmount || 0)} untuk ${order.id} SUDAH benar-benar dikirim. Tandai selesai?`)) return;
+            try {
+                const { error } = await nastelSupabase
+                    .from('orders')
+                    .update({
+                        refund_status: 'Selesai',
+                        refund_completed_at: new Date().toISOString()
+                    })
+                    .eq('id', dbId);
+                if (error) throw error;
+                showToast('✅ Refund ditandai selesai');
+                await renderCashierDashboard();
+            } catch (error) {
+                console.error(error);
+                showToast('❌ Gagal menyelesaikan refund');
+            }
+        };
+
         window.advanceV2Order = async function(dbId) {
             const order = supabaseOrdersCache.find(o => o.dbId === dbId);
             if (!order) return;
+
+            if (order.cancellationStatus === 'Diajukan') {
+                showToast('⚠️ Selesaikan pengajuan pembatalan terlebih dahulu');
+                return;
+            }
+
+            if (order.status === 'Menunggu Konfirmasi' && !paymentIsProcessable(order)) {
+                showToast('⚠️ Verifikasi pembayaran sebelum mulai proses');
+                return;
+            }
+
             const idx = V2_STATUS_FLOW.indexOf(order.status);
             if (idx < 0 || idx >= V2_STATUS_FLOW.length - 1) return;
+
             const nextStatus = V2_STATUS_FLOW[idx + 1];
-            const patch = { status: nextStatus };
-            if (nextStatus === 'Diproses') {
-                patch.payment_status = 'Pembayaran dikonfirmasi';
-                patch.payment_confirmed_at = new Date().toISOString();
-            }
+
             try {
-                const { error } = await nastelSupabase.from('orders').update(patch).eq('id', dbId);
+                const { error } = await nastelSupabase
+                    .from('orders')
+                    .update({ status: nextStatus })
+                    .eq('id', dbId);
                 if (error) throw error;
                 showToast(`✅ ${order.id}: ${nextStatus}`);
                 await renderCashierDashboard();
@@ -3486,7 +3828,14 @@
         window.copyV2Order = async function(dbId) {
             const order = supabaseOrdersCache.find(o => o.dbId === dbId);
             if (!order) return;
-            const lines = [`${order.id} · ${getOrderCustomerLabel(order)}`, `Status: ${order.status}`, `Pembayaran: ${order.paymentStatus}`];
+            const lines = [
+                `${order.id} · ${getOrderCustomerLabel(order)}`,
+                `Status: ${order.status}`,
+                `Pembayaran: ${order.paymentStatus}`,
+                order.amountPaid == null ? null : `Nominal masuk: ${formatRupiah(order.amountPaid)}`,
+                order.cancellationStatus === 'Tidak ada' ? null : `Pembatalan: ${order.cancellationStatus}`,
+                order.refundStatus === 'Tidak ada' ? null : `Refund: ${order.refundStatus} ${order.refundAmount ? formatRupiah(order.refundAmount) : ''}`
+            ].filter(Boolean);
             order.items.forEach(item => lines.push(`${item.qty}x ${item.title} = ${formatRupiah(item.qty * item.price)}`));
             lines.push(`Total: ${formatRupiah(order.total)}`);
             try { await navigator.clipboard.writeText(lines.join('\n')); showToast('📋 Ringkasan order disalin'); }
