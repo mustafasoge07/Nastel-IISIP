@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nastel-v1-production-final';
+const CACHE_NAME = 'nastel-v1-production-cors-fix';
 const APP_SHELL = [
   './',
   './index.html',
