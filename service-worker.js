@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nastel-v1-production-ui-fix-3-notes';
+const CACHE_NAME = 'nastel-v1-production-push-notifications';
 const APP_SHELL = [
   './',
   './index.html',
@@ -62,4 +62,91 @@ self.addEventListener('fetch', event => {
       });
     })
   );
+});
+
+
+self.addEventListener('push', event => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (_) {
+    payload = { title: 'Warkop Nastel', body: event.data ? event.data.text() : 'Ada update baru.' };
+  }
+
+  const data = payload.data || {};
+  const notice = {
+    eventType: data.eventType || payload.eventType || 'event',
+    orderId: data.orderId || payload.orderId || '',
+    orderCode: data.orderCode || payload.orderCode || '',
+    title: payload.title || 'Warkop Nastel',
+    body: payload.body || 'Ada update baru.',
+    url: data.url || './?open=kasir'
+  };
+
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
+
+    const visibleClients = windows.filter(client => client.visibilityState === 'visible');
+
+    if (visibleClients.length) {
+      visibleClients.forEach(client => {
+        client.postMessage({
+          type: 'NASTEL_PUSH_FOREGROUND',
+          payload: notice
+        });
+      });
+      return;
+    }
+
+    if ('setAppBadge' in self.navigator) {
+      try { await self.navigator.setAppBadge(1); } catch (_) {}
+    }
+
+    await self.registration.showNotification(notice.title, {
+      body: notice.body,
+      icon: './icons/icon-192.png',
+      badge: './icons/favicon-64.png',
+      tag: `${notice.eventType}:${notice.orderId || notice.orderCode || 'nastel'}`,
+      renotify: true,
+      requireInteraction: notice.eventType === 'cancellation_requested' || notice.eventType === 'refund_pending',
+      data: notice
+    });
+  })());
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const targetUrl = new URL(data.url || './?open=kasir', self.location.href).href;
+
+  event.waitUntil((async () => {
+    if ('clearAppBadge' in self.navigator) {
+      try { await self.navigator.clearAppBadge(); } catch (_) {}
+    }
+
+    const windows = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
+
+    for (const client of windows) {
+      try {
+        const clientUrl = new URL(client.url);
+        const target = new URL(targetUrl);
+        if (clientUrl.origin === target.origin && clientUrl.pathname === target.pathname) {
+          await client.focus();
+          client.postMessage({
+            type: 'NASTEL_PUSH_FOREGROUND',
+            payload: data
+          });
+          return;
+        }
+      } catch (_) {}
+    }
+
+    await self.clients.openWindow(targetUrl);
+  })());
 });
