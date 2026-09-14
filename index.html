@@ -677,7 +677,7 @@
             transform: translate(-50%, 20px);
             opacity: 0;
             pointer-events: none;
-            z-index: 3000;
+            z-index: 10000;
             background: #111827;
             color: #fff;
             padding: 12px 16px;
@@ -1498,6 +1498,23 @@
         @media(max-width:480px) {
             .cashier-session-actions { width:100%; }
             .cashier-session-actions .v2-btn { flex:1 1 145px; }
+        }
+
+    
+        /* ===== NASTEL PUSH FIX V2 ===== */
+        .toast.cashier-alert {
+            top: max(14px, env(safe-area-inset-top));
+            bottom: auto;
+            width: min(520px, calc(100vw - 24px));
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 16px;
+            font-size: .86rem;
+            line-height: 1.45;
+            box-shadow: 0 18px 45px rgba(0,0,0,.34);
+        }
+        .toast.cashier-alert.show {
+            transform: translate(-50%, 0);
         }
 
     </style>
@@ -2894,9 +2911,12 @@
         // --- 6. TOAST FEEDBACK & BADGE KARTU ---
         const toast = document.getElementById('toast');
         let toastTimer;
-        function showToast(message) {
-            clearTimeout(toastTimer); toast.textContent = message; toast.classList.add('show');
-            toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        function showToast(message, duration = 3600) {
+            if (!toast) return;
+            clearTimeout(toastTimer);
+            toast.textContent = message;
+            toast.classList.add('show');
+            toastTimer = setTimeout(() => toast.classList.remove('show'), Math.max(1200, Number(duration) || 3600));
         }
         const originalAddToCart = addToCart;
         addToCart = function (title, priceStr) {
@@ -3580,34 +3600,73 @@
         }
 
         function playCashierNoticeTone(kind = 'normal') {
+            const urgent = kind === 'urgent';
+
+            // In-app alert sound. This follows the device MEDIA volume,
+            // while system push notifications follow OS notification settings.
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (AudioCtx) {
                     const ctx = new AudioCtx();
-                    const now = ctx.currentTime;
-                    const freqs = kind === 'urgent' ? [740, 880, 740] : [660, 880];
-                    freqs.forEach((freq, index) => {
+                    const master = ctx.createGain();
+                    master.gain.value = urgent ? 0.52 : 0.44;
+                    master.connect(ctx.destination);
+
+                    const normalPattern = [
+                        [880, 0.00, 0.22],
+                        [1046, 0.25, 0.22],
+                        [880, 0.52, 0.22],
+                        [1318, 0.79, 0.34]
+                    ];
+                    const urgentPattern = [
+                        [880, 0.00, 0.24],
+                        [1175, 0.28, 0.24],
+                        [880, 0.58, 0.24],
+                        [1175, 0.86, 0.24],
+                        [880, 1.18, 0.24],
+                        [1397, 1.48, 0.46]
+                    ];
+                    const pattern = urgent ? urgentPattern : normalPattern;
+                    const now = ctx.currentTime + 0.02;
+
+                    pattern.forEach(([freq, offset, duration], index) => {
                         const osc = ctx.createOscillator();
                         const gain = ctx.createGain();
-                        osc.type = 'sine';
+                        osc.type = index % 2 ? 'triangle' : 'sine';
                         osc.frequency.value = freq;
-                        gain.gain.setValueAtTime(0.0001, now + index * 0.15);
-                        gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.15 + 0.02);
-                        gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.15 + 0.12);
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-                        osc.start(now + index * 0.15);
-                        osc.stop(now + index * 0.15 + 0.13);
-                    });
-                    setTimeout(() => ctx.close().catch(() => {}), 900);
-                }
-            } catch (_) {}
 
-            try {
-                if (navigator.vibrate) {
-                    navigator.vibrate(kind === 'urgent' ? [180, 80, 180, 80, 220] : [140, 70, 140]);
+                        const start = now + offset;
+                        const end = start + duration;
+                        gain.gain.setValueAtTime(0.0001, start);
+                        gain.gain.exponentialRampToValueAtTime(0.72, start + 0.025);
+                        gain.gain.setValueAtTime(0.72, Math.max(start + 0.03, end - 0.06));
+                        gain.gain.exponentialRampToValueAtTime(0.0001, end);
+
+                        osc.connect(gain);
+                        gain.connect(master);
+                        osc.start(start);
+                        osc.stop(end + 0.02);
+                    });
+
+                    const totalMs = urgent ? 2200 : 1450;
+                    setTimeout(() => ctx.close().catch(() => {}), totalMs + 400);
                 }
-            } catch (_) {}
+            } catch (error) {
+                console.warn('[Nastel Push] Audio alert tidak tersedia:', error);
+            }
+
+            // Android/compatible browsers. iOS may ignore the Vibration API.
+            try {
+                if (typeof navigator.vibrate === 'function') {
+                    const pattern = urgent
+                        ? [450, 120, 450, 120, 650]
+                        : [320, 110, 320, 110, 480];
+                    const didVibrate = navigator.vibrate(pattern);
+                    console.debug('[Nastel Push] vibrate:', didVibrate);
+                }
+            } catch (error) {
+                console.warn('[Nastel Push] Vibration tidak tersedia:', error);
+            }
         }
 
         function notifyCashierInApp({ eventType, orderId, orderCode, title, body }) {
@@ -3619,7 +3678,14 @@
 
             const urgent = ['cancellation_requested', 'refund_pending'].includes(eventType);
             playCashierNoticeTone(urgent ? 'urgent' : 'normal');
-            showToast(`${title || '🔔 Nastel'}${body ? ` · ${body}` : ''}`);
+
+            if (toast) toast.classList.add('cashier-alert');
+            showToast(`${title || '🔔 Nastel'}${body ? ` · ${body}` : ''}`, urgent ? 6500 : 5000);
+
+            clearTimeout(window.__nastelCashierToastClassTimer);
+            window.__nastelCashierToastClassTimer = setTimeout(() => {
+                toast?.classList.remove('cashier-alert');
+            }, urgent ? 6800 : 5300);
 
             if (document.visibilityState === 'visible' && cashierModal && !cashierModal.classList.contains('active')) {
                 cashierOpenBtn?.classList.add('push-on');
