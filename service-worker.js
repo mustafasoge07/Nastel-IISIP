@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nastel-v1-production-push-notifications';
+const CACHE_NAME = 'nastel-v1-production-push-fix-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -70,7 +70,10 @@ self.addEventListener('push', event => {
   try {
     payload = event.data ? event.data.json() : {};
   } catch (_) {
-    payload = { title: 'Warkop Nastel', body: event.data ? event.data.text() : 'Ada update baru.' };
+    payload = {
+      title: 'Warkop Nastel',
+      body: event.data ? event.data.text() : 'Ada update baru.'
+    };
   }
 
   const data = payload.data || {};
@@ -84,34 +87,40 @@ self.addEventListener('push', event => {
   };
 
   event.waitUntil((async () => {
+    // Inform an open PWA too. The page has its own dedupe protection.
     const windows = await self.clients.matchAll({
       type: 'window',
       includeUncontrolled: true
     });
 
-    const visibleClients = windows.filter(client => client.visibilityState === 'visible');
-
-    if (visibleClients.length) {
-      visibleClients.forEach(client => {
-        client.postMessage({
-          type: 'NASTEL_PUSH_FOREGROUND',
-          payload: notice
-        });
+    windows.forEach(client => {
+      client.postMessage({
+        type: 'NASTEL_PUSH_FOREGROUND',
+        payload: notice
       });
-      return;
-    }
+    });
 
     if ('setAppBadge' in self.navigator) {
       try { await self.navigator.setAppBadge(1); } catch (_) {}
     }
 
+    const urgent = notice.eventType === 'cancellation_requested' ||
+                   notice.eventType === 'refund_pending';
+
+    // IMPORTANT: a real push ALWAYS creates a persistent system notification.
+    // This remains valid even when the PWA page is not running.
     await self.registration.showNotification(notice.title, {
       body: notice.body,
       icon: './icons/icon-192.png',
       badge: './icons/favicon-64.png',
-      tag: `${notice.eventType}:${notice.orderId || notice.orderCode || 'nastel'}`,
+      tag: `${notice.eventType}:${notice.orderId || notice.orderCode || Date.now()}`,
       renotify: true,
-      requireInteraction: notice.eventType === 'cancellation_requested' || notice.eventType === 'refund_pending',
+      requireInteraction: true,
+      silent: false,
+      vibrate: urgent
+        ? [450, 120, 450, 120, 650]
+        : [320, 110, 320, 110, 480],
+      timestamp: Date.now(),
       data: notice
     });
   })());
@@ -137,6 +146,9 @@ self.addEventListener('notificationclick', event => {
         const clientUrl = new URL(client.url);
         const target = new URL(targetUrl);
         if (clientUrl.origin === target.origin && clientUrl.pathname === target.pathname) {
+          if ('navigate' in client) {
+            try { await client.navigate(targetUrl); } catch (_) {}
+          }
           await client.focus();
           client.postMessage({
             type: 'NASTEL_PUSH_FOREGROUND',
