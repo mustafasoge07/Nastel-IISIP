@@ -2240,7 +2240,7 @@
                         </div>
                         <button id="cashierLogoutBtn" class="v2-btn secondary" type="button">Keluar</button>
                     </div>
-                    <p class="v2-note">🔐 <strong>Login Kasir sudah memakai Supabase Auth.</strong> Pada tahap ini data order/status masih memakai penyimpanan lokal sementara; integrasi order lintas perangkat ke Supabase akan menjadi tahap berikutnya.</p>
+                    <p class="v2-note">☁️ <strong>Mode Online Supabase aktif.</strong> Order, bukti pembayaran, status, dan dashboard kasir tersinkron lintas perangkat. Bukti pembayaran disimpan di bucket private.</p>
                     <div class="v2-stats">
                         <div class="v2-stat"><small>Order Masuk Hari Ini</small><strong id="statOrders">0</strong></div>
                         <div class="v2-stat"><small>Pendapatan Terverifikasi</small><strong id="statRevenue">Rp 0</strong></div>
@@ -2256,7 +2256,7 @@
                             <button class="v2-filter-btn" data-status="Siap" type="button">Siap</button>
                             <button class="v2-filter-btn" data-status="Selesai" type="button">Selesai</button>
                         </div>
-                        <button id="clearOrdersBtn" class="v2-btn danger" type="button">Reset Order</button>
+                        <button id="clearOrdersBtn" class="v2-btn secondary" type="button">↻ Refresh</button>
                     </div>
 
                     <div id="cashierOrders" class="v2-cashier-orders"></div>
@@ -2502,6 +2502,7 @@
         const proofFileInfo = document.getElementById('proofFileInfo');
         const MAX_PROOF_BYTES = 5 * 1024 * 1024;
         const TARGET_PROOF_BYTES = 300 * 1024;
+        const MAX_UPLOAD_PROOF_BYTES = 500 * 1024;
         const PROOF_RETENTION_DAYS = 30;
         let preparedProofFile = null;
         let originalProofMeta = null;
@@ -2646,6 +2647,9 @@
             try {
                 originalProofMeta = { name: file.name || 'bukti-pembayaran', type: file.type || '', size: Number(file.size || 0) };
                 preparedProofFile = await compressPaymentProof(file);
+                if (preparedProofFile.size > MAX_UPLOAD_PROOF_BYTES) {
+                    throw new Error(`Hasil kompres masih ${formatFileSize(preparedProofFile.size)}. Maksimum upload 500 KB. Coba gunakan screenshot/foto dengan resolusi lebih rendah.`);
+                }
                 const saved = Math.max(0, originalProofMeta.size - preparedProofFile.size);
                 const percent = originalProofMeta.size ? Math.round((saved / originalProofMeta.size) * 100) : 0;
                 setProofInfo(`✅ Siap: ${formatFileSize(originalProofMeta.size)} → ${formatFileSize(preparedProofFile.size)}${percent > 0 ? ` · hemat ${percent}%` : ' · sudah optimal'}.`, 'ok');
@@ -2706,7 +2710,7 @@
                 renderCashierDashboard();
                 renderTrackedOrder(order.id);
                 showOrderSuccess(order);
-                showToast(`✅ ${order.id} masuk Dashboard Kasir`);
+                showToast(`✅ ${order.id} tersimpan online & masuk Dashboard Kasir`);
             } catch (error) {
                 console.error('[Nastel V2] Gagal menyimpan order:', error);
                 showToast('❌ Gagal menyimpan bukti/order. Coba foto lain atau ulangi.');
@@ -2818,135 +2822,48 @@
 
 
 
-        // --- 7. WARKOP NASTEL V2 · ORDER SYSTEM (LOCAL / SUPABASE-READY) ---
-        const V2_ORDER_KEY = 'nastel_v2_orders';
-        const V2_COUNTER_KEY = 'nastel_v2_counter';
+        // --- 7. WARKOP NASTEL V2 · ORDER SYSTEM (SUPABASE ONLINE) ---
+        const V2_ORDER_KEY = 'nastel_v2_customer_order_snapshots';
         const V2_AVAILABILITY_KEY = 'nastel_v2_availability';
         const V2_LAST_ORDER_KEY = 'nastel_v2_last_order';
+        const V2_TRACK_TOKEN_KEY = 'nastel_v2_tracking_tokens';
         const V2_STATUS_FLOW = ['Menunggu Konfirmasi', 'Diproses', 'Siap', 'Selesai'];
         let cashierFilter = 'all';
-        const V2_DB = 'nastel_v2_db';
-        const V2_PROOF_STORE = 'payment_proofs';
-        const V2_CHANNEL_NAME = 'nastel_v2_realtime';
-        const v2Channel = ('BroadcastChannel' in window) ? new BroadcastChannel(V2_CHANNEL_NAME) : null;
-
-        function openV2DB() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open(V2_DB, 1);
-                req.onupgradeneeded = () => {
-                    const db = req.result;
-                    if (!db.objectStoreNames.contains(V2_PROOF_STORE)) db.createObjectStore(V2_PROOF_STORE, { keyPath: 'orderId' });
-                };
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error || new Error('IndexedDB tidak tersedia'));
-            });
-        }
-
-        async function saveV2PaymentProof(orderId, file) {
-            const db = await openV2DB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(V2_PROOF_STORE, 'readwrite');
-                const savedAt = new Date();
-                const expiresAt = new Date(savedAt.getTime() + PROOF_RETENTION_DAYS * 24 * 60 * 60 * 1000);
-                tx.objectStore(V2_PROOF_STORE).put({ orderId, blob: file, name: file.name || 'bukti-pembayaran', type: file.type || 'image/jpeg', size: file.size || 0, savedAt: savedAt.toISOString(), expiresAt: expiresAt.toISOString() });
-                tx.oncomplete = () => { db.close(); resolve(true); };
-                tx.onerror = () => { db.close(); reject(tx.error || new Error('Gagal menyimpan bukti')); };
-            });
-        }
-
-        async function getV2PaymentProof(orderId) {
-            const db = await openV2DB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(V2_PROOF_STORE, 'readonly');
-                const req = tx.objectStore(V2_PROOF_STORE).get(orderId);
-                req.onsuccess = () => { const value = req.result || null; db.close(); resolve(value); };
-                req.onerror = () => { db.close(); reject(req.error || new Error('Bukti tidak ditemukan')); };
-            });
-        }
-
-        async function clearV2PaymentProofs() {
-            try {
-                const db = await openV2DB();
-                await new Promise((resolve, reject) => {
-                    const tx = db.transaction(V2_PROOF_STORE, 'readwrite');
-                    tx.objectStore(V2_PROOF_STORE).clear();
-                    tx.oncomplete = resolve;
-                    tx.onerror = () => reject(tx.error);
-                });
-                db.close();
-            } catch (e) { console.warn('[Nastel V2] Gagal reset bukti:', e); }
-        }
-
-        async function cleanupExpiredV2PaymentProofs() {
-            const expiredIds = [];
-            try {
-                const db = await openV2DB();
-                await new Promise((resolve, reject) => {
-                    const tx = db.transaction(V2_PROOF_STORE, 'readwrite');
-                    const store = tx.objectStore(V2_PROOF_STORE);
-                    const req = store.openCursor();
-                    req.onsuccess = () => {
-                        const cursor = req.result;
-                        if (!cursor) return;
-                        const value = cursor.value || {};
-                        const expiry = value.expiresAt ? Date.parse(value.expiresAt) : (Date.parse(value.savedAt || 0) + PROOF_RETENTION_DAYS * 86400000);
-                        if (Number.isFinite(expiry) && expiry <= Date.now()) {
-                            expiredIds.push(value.orderId);
-                            cursor.delete();
-                        }
-                        cursor.continue();
-                    };
-                    req.onerror = () => reject(req.error);
-                    tx.oncomplete = resolve;
-                    tx.onerror = () => reject(tx.error);
-                });
-                db.close();
-            } catch (e) {
-                console.warn('[Nastel V2] Gagal cleanup bukti kedaluwarsa:', e);
-                return 0;
-            }
-
-            if (expiredIds.length) {
-                const deletedAt = new Date().toISOString();
-                const expiredSet = new Set(expiredIds);
-                const orders = getV2Orders();
-                let changed = false;
-                orders.forEach(order => {
-                    if (expiredSet.has(order.id)) {
-                        order.paymentProof = false;
-                        order.proofDeletedAt = deletedAt;
-                        order.proofRetentionDays = PROOF_RETENTION_DAYS;
-                        changed = true;
-                    }
-                });
-                if (changed) saveV2Orders(orders);
-            }
-            return expiredIds.length;
-        }
-
-        function notifyV2Change(type, orderId) {
-            try { v2Channel?.postMessage({ type, orderId, at: Date.now() }); } catch (_) {}
-        }
-
-        function refreshV2LiveViews(orderId) {
-            if (cashierDashboard && !cashierDashboard.hidden) renderCashierDashboard();
-            const tracked = document.getElementById('trackOrderInput')?.value?.trim();
-            if (tracked && (!orderId || tracked === orderId)) renderTrackedOrder(tracked);
-        }
-
-        if (v2Channel) v2Channel.onmessage = event => refreshV2LiveViews(event.data?.orderId || null);
-        window.addEventListener('storage', event => {
-            if ([V2_ORDER_KEY, V2_AVAILABILITY_KEY].includes(event.key)) refreshV2LiveViews();
-        });
+        let supabaseOrdersCache = [];
+        let cashierRealtimeChannel = null;
+        let dashboardReloadTimer = null;
 
         function getV2Orders() {
             try { return JSON.parse(localStorage.getItem(V2_ORDER_KEY)) || []; }
             catch (_) { return []; }
         }
 
-        function saveV2Orders(orders, orderId = null) {
-            localStorage.setItem(V2_ORDER_KEY, JSON.stringify(orders));
-            notifyV2Change('orders', orderId);
+        function saveV2Orders(orders) {
+            localStorage.setItem(V2_ORDER_KEY, JSON.stringify(orders.slice(0, 30)));
+        }
+
+        function upsertLocalOrderSnapshot(order) {
+            const orders = getV2Orders();
+            const idx = orders.findIndex(o => o.id === order.id);
+            if (idx >= 0) orders[idx] = { ...orders[idx], ...order };
+            else orders.unshift(order);
+            saveV2Orders(orders);
+        }
+
+        function getTrackingTokens() {
+            try { return JSON.parse(localStorage.getItem(V2_TRACK_TOKEN_KEY)) || {}; }
+            catch (_) { return {}; }
+        }
+
+        function rememberTrackingToken(orderCode, token) {
+            if (!orderCode || !token) return;
+            const tokens = getTrackingTokens();
+            tokens[orderCode] = token;
+            localStorage.setItem(V2_TRACK_TOKEN_KEY, JSON.stringify(tokens));
+        }
+
+        function getTrackingToken(orderCode) {
+            return getTrackingTokens()[String(orderCode || '').trim().toUpperCase()] || null;
         }
 
         function localDateParts(date = new Date()) {
@@ -2956,46 +2873,142 @@
             return { yyyy, mm, dd, key: `${yyyy}-${mm}-${dd}`, compact: `${dd}${mm}${String(yyyy).slice(-2)}` };
         }
 
-        function generateOrderId() {
+        function makeProofObjectPath(file) {
             const p = localDateParts();
-            let counter;
-            try { counter = JSON.parse(localStorage.getItem(V2_COUNTER_KEY)) || {}; }
-            catch (_) { counter = {}; }
-            if (counter.date !== p.key) counter = { date: p.key, value: 0 };
-            counter.value += 1;
-            localStorage.setItem(V2_COUNTER_KEY, JSON.stringify(counter));
-            return `NST-${p.compact}-${String(counter.value).padStart(3, '0')}`;
+            const randomId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+            const ext = String(file?.type || '').toLowerCase() === 'image/webp' ? 'webp' : String(file?.type || '').toLowerCase() === 'image/png' ? 'png' : 'jpg';
+            return `proofs/${p.yyyy}/${p.mm}/${p.dd}/${randomId}.${ext}`;
         }
 
         async function createV2Order({ customerName, note, items, proofFile }) {
-            const id = generateOrderId();
-            await saveV2PaymentProof(id, proofFile);
+            if (!proofFile) throw new Error('Bukti pembayaran belum tersedia.');
+            if (proofFile.size > MAX_UPLOAD_PROOF_BYTES) throw new Error('Bukti pembayaran melebihi batas 500 KB setelah kompres.');
+
+            const proofPath = makeProofObjectPath(proofFile);
+            const { error: uploadError } = await nastelSupabase.storage
+                .from('payment-proofs')
+                .upload(proofPath, proofFile, {
+                    contentType: proofFile.type || 'image/jpeg',
+                    cacheControl: '3600',
+                    upsert: false
+                });
+            if (uploadError) throw new Error(`Upload bukti gagal: ${uploadError.message}`);
+
+            const rpcItems = items.map(item => ({ name: item.title, qty: Number(item.qty) }));
+            const { data, error } = await nastelSupabase.rpc('create_public_order', {
+                p_customer_name: customerName,
+                p_note: note === 'Tidak ada' ? '' : note,
+                p_items: rpcItems,
+                p_proof_path: proofPath,
+                p_proof_name: proofFile.name || 'bukti-pembayaran.jpg',
+                p_proof_type: proofFile.type || 'image/jpeg',
+                p_proof_size: Number(proofFile.size || 0),
+                p_proof_original_size: Number(originalProofMeta?.size || proofFile.size || 0)
+            });
+            if (error) throw new Error(`Order gagal dibuat: ${error.message}`);
+
+            const row = Array.isArray(data) ? data[0] : data;
+            if (!row?.order_code || !row?.tracking_token) throw new Error('Supabase tidak mengembalikan nomor order.');
+
             const order = {
-                id,
-                customerName: customerName,
+                dbId: row.order_id,
+                id: row.order_code,
+                trackingToken: row.tracking_token,
+                customerName,
                 note,
                 items: items.map(item => ({ title: item.title, price: Number(item.price), qty: Number(item.qty) })),
-                total: items.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0),
-                status: V2_STATUS_FLOW[0],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                total: Number(row.total || 0),
+                status: row.status || V2_STATUS_FLOW[0],
+                createdAt: row.created_at || new Date().toISOString(),
+                updatedAt: row.created_at || new Date().toISOString(),
                 payment: 'QRIS / Transfer',
                 paymentProof: true,
-                proofName: proofFile.name || 'bukti-pembayaran',
+                proofPath,
+                proofName: proofFile.name || 'bukti-pembayaran.jpg',
                 proofType: proofFile.type || 'image/jpeg',
                 proofSize: Number(proofFile.size || 0),
-                proofOriginalName: originalProofMeta?.name || proofFile.name || 'bukti-pembayaran',
-                proofOriginalType: originalProofMeta?.type || proofFile.type || '',
                 proofOriginalSize: Number(originalProofMeta?.size || proofFile.size || 0),
                 proofRetentionDays: PROOF_RETENTION_DAYS,
                 proofExpiresAt: new Date(Date.now() + PROOF_RETENTION_DAYS * 86400000).toISOString(),
-                paymentStatus: 'Menunggu verifikasi kasir' 
+                paymentStatus: row.payment_status || 'Menunggu verifikasi kasir'
             };
-            const orders = getV2Orders();
-            orders.unshift(order);
-            saveV2Orders(orders, order.id);
+
+            rememberTrackingToken(order.id, order.trackingToken);
+            upsertLocalOrderSnapshot(order);
             localStorage.setItem(V2_LAST_ORDER_KEY, order.id);
             return order;
+        }
+
+        function mapSupabaseOrder(row) {
+            const rawItems = Array.isArray(row.order_items) ? [...row.order_items] : [];
+            rawItems.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+            return {
+                dbId: row.id,
+                id: row.order_code,
+                trackingToken: row.tracking_token,
+                customerName: row.customer_name,
+                note: row.note || 'Tidak ada',
+                items: rawItems.map(item => ({
+                    title: item.item_name,
+                    price: Number(item.unit_price || 0),
+                    qty: Number(item.qty || 0)
+                })),
+                total: Number(row.total || 0),
+                status: row.status,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+                payment: row.payment_method || 'QRIS / Transfer',
+                paymentStatus: row.payment_status,
+                paymentProof: Boolean(row.proof_path) && !row.proof_deleted_at,
+                proofPath: row.proof_path,
+                proofName: row.proof_name,
+                proofType: row.proof_type,
+                proofSize: Number(row.proof_size || 0),
+                proofOriginalSize: Number(row.proof_original_size || 0),
+                proofExpiresAt: row.proof_expires_at,
+                proofDeletedAt: row.proof_deleted_at,
+                proofRetentionDays: PROOF_RETENTION_DAYS
+            };
+        }
+
+        async function loadCashierOrders() {
+            const { data, error } = await nastelSupabase
+                .from('orders')
+                .select(`
+                    id, order_code, tracking_token, customer_name, note, total,
+                    status, payment_status, payment_method,
+                    proof_path, proof_name, proof_type, proof_size, proof_original_size,
+                    proof_expires_at, proof_deleted_at, created_at, updated_at,
+                    order_items ( id, item_name, unit_price, qty, subtotal )
+                `)
+                .order('created_at', { ascending: false })
+                .limit(300);
+            if (error) throw error;
+            supabaseOrdersCache = (data || []).map(mapSupabaseOrder);
+            return supabaseOrdersCache;
+        }
+
+        function scheduleDashboardReload() {
+            clearTimeout(dashboardReloadTimer);
+            dashboardReloadTimer = setTimeout(() => {
+                if (cashierDashboard && !cashierDashboard.hidden) renderCashierDashboard();
+            }, 180);
+        }
+
+        function startCashierRealtime() {
+            if (cashierRealtimeChannel) return;
+            cashierRealtimeChannel = nastelSupabase
+                .channel('nastel-cashier-orders-live')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, scheduleDashboardReload)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, scheduleDashboardReload)
+                .subscribe();
+        }
+
+        async function stopCashierRealtime() {
+            if (!cashierRealtimeChannel) return;
+            const channel = cashierRealtimeChannel;
+            cashierRealtimeChannel = null;
+            try { await nastelSupabase.removeChannel(channel); } catch (_) {}
         }
 
         function statusMeta(status) {
@@ -3035,41 +3048,80 @@
             return 'Pemesan tidak tercatat';
         }
 
-        function renderTrackedOrder(orderId) {
+        async function renderTrackedOrder(orderId) {
             const result = document.getElementById('orderTrackResult');
             const cleanId = String(orderId || '').trim().toUpperCase();
             if (!cleanId) {
                 result.innerHTML = '<div class="v2-empty-state">Masukkan nomor pesanan terlebih dahulu.</div>';
                 return;
             }
-            const order = getV2Orders().find(o => String(o.id).toUpperCase() === cleanId);
-            if (!order) {
-                result.innerHTML = `<div class="v2-empty-state">Pesanan <strong>${escapeHTML(cleanId)}</strong> tidak ditemukan di perangkat ini.</div>`;
+
+            const trackingToken = getTrackingToken(cleanId);
+            if (!trackingToken) {
+                result.innerHTML = `<div class="v2-empty-state">Nomor <strong>${escapeHTML(cleanId)}</strong> belum tersimpan sebagai pesanan dari perangkat ini. Untuk keamanan, tracking online membutuhkan token order yang otomatis tersimpan saat checkout.</div>`;
                 return;
             }
-            const meta = statusMeta(order.status);
-            result.innerHTML = `
-                <div class="v2-order-card">
-                    <div class="v2-order-card-top">
-                        <div><div class="v2-order-id">${escapeHTML(order.id)}</div><div class="v2-order-meta">${escapeHTML(getOrderCustomerLabel(order))} · ${formatOrderTime(order.createdAt)}</div></div>
-                        <span class="v2-status ${meta.cls}">${meta.icon} ${escapeHTML(order.status)}</span>
-                    </div>
-                    ${orderProgressHTML(order)}
-                    ${orderItemsHTML(order)}
-                    <div class="v2-order-meta" style="margin-top:10px">💳 ${escapeHTML(order.paymentStatus || 'Menunggu verifikasi pembayaran')}</div>
-                    ${order.note && order.note !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">Catatan: ${escapeHTML(order.note)}</div>` : ''}
-                    <div class="v2-wa-reminder ${order.waOpenedAt ? '' : 'pending'}">
-                        ${order.waOpenedAt
-                            ? `✅ WhatsApp kasir pernah dibuka ${formatOrderTime(order.waOpenedAt)}. Kalau pesannya belum sempat terkirim, gunakan tombol di bawah untuk membuka kembali.`
-                            : `⚠️ Belum membuka konfirmasi WhatsApp. Supaya kasir juga menerima konfirmasi lewat WA, tekan tombol di bawah.`}
-                    </div>
-                    <div class="v2-track-actions">
-                        <button class="v2-btn" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">
-                            ${order.waOpenedAt ? '💬 Buka / Kirim Ulang WhatsApp' : '💬 Konfirmasi ke WhatsApp Kasir'}
-                        </button>
-                    </div>
-                </div>`;
-            document.getElementById('trackOrderInput').value = order.id;
+
+            result.innerHTML = '<div class="v2-empty-state">Memuat status pesanan dari Supabase...</div>';
+            try {
+                const { data, error } = await nastelSupabase.rpc('track_public_order', {
+                    p_order_code: cleanId,
+                    p_tracking_token: trackingToken
+                });
+                if (error) throw error;
+                const row = Array.isArray(data) ? data[0] : data;
+                if (!row) {
+                    result.innerHTML = `<div class="v2-empty-state">Pesanan <strong>${escapeHTML(cleanId)}</strong> tidak ditemukan.</div>`;
+                    return;
+                }
+
+                const existing = getV2Orders().find(o => o.id === cleanId) || {};
+                const order = {
+                    ...existing,
+                    id: row.order_code,
+                    trackingToken,
+                    customerName: row.customer_name,
+                    note: row.note || 'Tidak ada',
+                    status: row.status,
+                    paymentStatus: row.payment_status,
+                    payment: row.payment_method,
+                    total: Number(row.total || 0),
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at,
+                    items: (row.items || []).map(item => ({
+                        title: item.name,
+                        price: Number(item.price || 0),
+                        qty: Number(item.qty || 0)
+                    }))
+                };
+                upsertLocalOrderSnapshot(order);
+
+                const meta = statusMeta(order.status);
+                result.innerHTML = `
+                    <div class="v2-order-card">
+                        <div class="v2-order-card-top">
+                            <div><div class="v2-order-id">${escapeHTML(order.id)}</div><div class="v2-order-meta">${escapeHTML(getOrderCustomerLabel(order))} · ${formatOrderTime(order.createdAt)}</div></div>
+                            <span class="v2-status ${meta.cls}">${meta.icon} ${escapeHTML(order.status)}</span>
+                        </div>
+                        ${orderProgressHTML(order)}
+                        ${orderItemsHTML(order)}
+                        <div class="v2-order-meta" style="margin-top:10px">💳 ${escapeHTML(order.paymentStatus || 'Menunggu verifikasi pembayaran')}</div>
+                        ${order.note && order.note !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">Catatan: ${escapeHTML(order.note)}</div>` : ''}
+                        <div class="v2-wa-reminder ${order.waOpenedAt ? '' : 'pending'}">
+                            ${order.waOpenedAt
+                                ? `✅ WhatsApp kasir pernah dibuka ${formatOrderTime(order.waOpenedAt)}.`
+                                : `💬 Pesanan sudah tersimpan online. WhatsApp tetap tersedia sebagai konfirmasi tambahan.`}
+                        </div>
+                        <div class="v2-track-actions">
+                            <button class="v2-btn" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">💬 WhatsApp Kasir</button>
+                            <button class="v2-btn secondary" type="button" onclick="renderTrackedOrder('${escapeHTML(order.id)}')">↻ Refresh Status</button>
+                        </div>
+                    </div>`;
+                document.getElementById('trackOrderInput').value = order.id;
+            } catch (error) {
+                console.error('[Nastel] Tracking Supabase gagal:', error);
+                result.innerHTML = '<div class="v2-empty-state">Gagal mengambil status dari Supabase. Periksa internet lalu coba lagi.</div>';
+            }
         }
 
         document.getElementById('trackOrderBtn').addEventListener('click', () => renderTrackedOrder(document.getElementById('trackOrderInput').value));
@@ -3077,7 +3129,7 @@
         document.getElementById('trackLatestBtn').addEventListener('click', () => {
             const lastId = localStorage.getItem(V2_LAST_ORDER_KEY);
             if (lastId) renderTrackedOrder(lastId);
-            else document.getElementById('orderTrackResult').innerHTML = '<div class="v2-empty-state">Belum ada pesanan V2 dari perangkat ini.</div>';
+            else document.getElementById('orderTrackResult').innerHTML = '<div class="v2-empty-state">Belum ada pesanan online dari perangkat ini.</div>';
         });
 
         function buildV2WhatsAppText(order) {
@@ -3197,6 +3249,7 @@
             cashierSessionEmail.textContent = staff?.user?.email || 'Akun Supabase';
             cashierSessionRole.textContent = staff?.role === 'admin' ? 'Admin Nastel' : 'Kasir Nastel';
             setCashierAuthStatus('');
+            startCashierRealtime();
             renderCashierDashboard();
         }
 
@@ -3287,6 +3340,7 @@
         cashierLogoutBtn.addEventListener('click', async () => {
             cashierLogoutBtn.disabled = true;
             try {
+                await stopCashierRealtime();
                 await nastelSupabase.auth.signOut();
                 cashierPassword.value = '';
                 showCashierLogin();
@@ -3312,29 +3366,37 @@
 
         function todayOrders() {
             const todayKey = localDateParts().key;
-            return getV2Orders().filter(o => localDateParts(new Date(o.createdAt)).key === todayKey);
+            return supabaseOrdersCache.filter(o => localDateParts(new Date(o.createdAt)).key === todayKey);
         }
 
-        function renderCashierDashboard() {
+        async function renderCashierDashboard() {
             if (!cashierDashboard || cashierDashboard.hidden) return;
-            const todays = todayOrders();
-            const verifiedOrders = todays.filter(o => o.paymentStatus === 'Pembayaran dikonfirmasi');
-            document.getElementById('statOrders').textContent = todays.length;
-            document.getElementById('statRevenue').textContent = formatRupiah(verifiedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0));
-            document.getElementById('statActive').textContent = todays.filter(o => o.status !== 'Selesai').length;
+            const wrap = document.getElementById('cashierOrders');
+            if (!supabaseOrdersCache.length) wrap.innerHTML = '<div class="v2-empty-state">Memuat order dari Supabase...</div>';
+            try {
+                await loadCashierOrders();
+                const todays = todayOrders();
+                const verifiedOrders = todays.filter(o => o.paymentStatus === 'Pembayaran dikonfirmasi');
+                document.getElementById('statOrders').textContent = todays.length;
+                document.getElementById('statRevenue').textContent = formatRupiah(verifiedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0));
+                document.getElementById('statActive').textContent = todays.filter(o => !['Selesai', 'Dibatalkan'].includes(o.status)).length;
 
-            const itemCounts = {};
-            verifiedOrders.forEach(o => o.items.forEach(item => itemCounts[item.title] = (itemCounts[item.title] || 0) + item.qty));
-            const top = Object.entries(itemCounts).sort((a,b) => b[1] - a[1])[0];
-            document.getElementById('statTopItem').textContent = top ? `${top[0]} (${top[1]})` : '-';
+                const itemCounts = {};
+                verifiedOrders.forEach(o => o.items.forEach(item => itemCounts[item.title] = (itemCounts[item.title] || 0) + item.qty));
+                const top = Object.entries(itemCounts).sort((a,b) => b[1] - a[1])[0];
+                document.getElementById('statTopItem').textContent = top ? `${top[0]} (${top[1]})` : '-';
 
-            renderCashierOrders();
-            renderAvailabilityManager();
+                renderCashierOrders();
+                renderAvailabilityManager();
+            } catch (error) {
+                console.error('[Nastel] Gagal memuat dashboard Supabase:', error);
+                wrap.innerHTML = `<div class="v2-empty-state">⚠️ Gagal memuat order Supabase: ${escapeHTML(error.message || 'Unknown error')}</div>`;
+            }
         }
 
         function renderCashierOrders() {
             const wrap = document.getElementById('cashierOrders');
-            let orders = getV2Orders();
+            let orders = [...supabaseOrdersCache];
             if (cashierFilter !== 'all') orders = orders.filter(o => o.status === cashierFilter);
             if (!orders.length) {
                 wrap.innerHTML = '<div class="v2-empty-state">Belum ada order pada filter ini.</div>';
@@ -3352,61 +3414,64 @@
                     </div>
                     ${orderItemsHTML(order)}
                     ${order.note && order.note !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:8px">📝 ${escapeHTML(order.note)}</div>` : ''}
-                    ${order.paymentProof ? `<div class="v2-proof-box"><div class="v2-proof-meta"><div style="font-size:1.7rem">📸</div><div class="v2-proof-meta-text"><strong>Bukti pembayaran tersedia</strong><small>${escapeHTML(order.proofName || 'Bukti pembayaran')} · ${order.proofSize ? formatFileSize(order.proofSize) : 'tersimpan lokal'}${order.proofOriginalSize && order.proofOriginalSize > order.proofSize ? ` · dari ${formatFileSize(order.proofOriginalSize)}` : ''}</small></div></div><button class="v2-btn secondary" type="button" onclick="viewV2PaymentProof('${order.id}')">Lihat Bukti</button></div>` : order.proofDeletedAt ? `<div class="v2-proof-box" style="border-color:rgba(107,114,128,.3);background:rgba(107,114,128,.06)"><div class="v2-proof-meta"><div style="font-size:1.5rem">🗑️</div><div class="v2-proof-meta-text"><strong>Bukti sudah dibersihkan</strong><small>Retensi ${order.proofRetentionDays || 30} hari · data transaksi tetap tersimpan.</small></div></div></div>` : `<div class="v2-proof-box" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)"><div class="v2-proof-meta"><div style="font-size:1.5rem">⚠️</div><div class="v2-proof-meta-text"><strong>Bukti belum tersedia</strong><small>Order lama / belum tersimpan.</small></div></div></div>`}
+                    ${order.paymentProof ? `<div class="v2-proof-box"><div class="v2-proof-meta"><div style="font-size:1.7rem">📸</div><div class="v2-proof-meta-text"><strong>Bukti pembayaran tersedia</strong><small>${escapeHTML(order.proofName || 'Bukti pembayaran')} · ${order.proofSize ? formatFileSize(order.proofSize) : 'online'}${order.proofOriginalSize && order.proofOriginalSize > order.proofSize ? ` · dari ${formatFileSize(order.proofOriginalSize)}` : ''}</small></div></div><button class="v2-btn secondary" type="button" onclick="viewV2PaymentProof('${order.dbId}')">Lihat Bukti</button></div>` : order.proofDeletedAt ? `<div class="v2-proof-box" style="border-color:rgba(107,114,128,.3);background:rgba(107,114,128,.06)"><div class="v2-proof-meta"><div style="font-size:1.5rem">🗑️</div><div class="v2-proof-meta-text"><strong>Bukti sudah dibersihkan</strong><small>Data transaksi tetap tersimpan.</small></div></div></div>` : `<div class="v2-proof-box" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)"><div class="v2-proof-meta"><div style="font-size:1.5rem">⚠️</div><div class="v2-proof-meta-text"><strong>Bukti belum tersedia</strong></div></div></div>`}
                     <div class="v2-cashier-actions">
-                        ${next ? `<button class="v2-btn" type="button" onclick="advanceV2Order('${order.id}')">${nextLabel}</button>` : ''}
-                        <button class="v2-btn secondary" type="button" onclick="copyV2Order('${order.id}')">Salin Ringkasan</button>
-                        <button class="v2-btn secondary" type="button" onclick="sendV2OrderWA('${order.id}')">WhatsApp</button>
+                        ${next ? `<button class="v2-btn" type="button" onclick="advanceV2Order('${order.dbId}')">${nextLabel}</button>` : ''}
+                        <button class="v2-btn secondary" type="button" onclick="copyV2Order('${order.dbId}')">Salin Ringkasan</button>
+                        <button class="v2-btn secondary" type="button" onclick="sendV2OrderWA('${order.dbId}')">WhatsApp</button>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        window.advanceV2Order = function(orderId) {
-            const orders = getV2Orders();
-            const order = orders.find(o => o.id === orderId);
+        window.advanceV2Order = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
             if (!order) return;
             const idx = V2_STATUS_FLOW.indexOf(order.status);
             if (idx < 0 || idx >= V2_STATUS_FLOW.length - 1) return;
-            order.status = V2_STATUS_FLOW[idx + 1];
-            if (order.status === 'Diproses') order.paymentStatus = 'Pembayaran dikonfirmasi';
-            order.updatedAt = new Date().toISOString();
-            saveV2Orders(orders, order.id);
-            renderCashierDashboard();
-            const tracked = document.getElementById('trackOrderInput').value.trim();
-            if (tracked === order.id) renderTrackedOrder(order.id);
-            showToast(`✅ ${order.id}: ${order.status}`);
-        };
-
-        window.viewV2PaymentProof = async function(orderId) {
-            const popup = window.open('', '_blank');
-            if (popup) popup.document.write('<title>Bukti Pembayaran</title><p style="font-family:sans-serif;padding:24px">Memuat bukti pembayaran...</p>');
+            const nextStatus = V2_STATUS_FLOW[idx + 1];
+            const patch = { status: nextStatus };
+            if (nextStatus === 'Diproses') {
+                patch.payment_status = 'Pembayaran dikonfirmasi';
+                patch.payment_confirmed_at = new Date().toISOString();
+            }
             try {
-                const proof = await getV2PaymentProof(orderId);
-                if (!proof?.blob) throw new Error('Bukti tidak ditemukan');
-                const url = URL.createObjectURL(proof.blob);
-                if (popup) {
-                    popup.location.href = url;
-                    setTimeout(() => URL.revokeObjectURL(url), 60000);
-                } else {
-                    const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 60000);
-                }
-            } catch (e) {
-                if (popup) popup.document.body.innerHTML = '<p style="font-family:sans-serif;padding:24px">Bukti pembayaran tidak ditemukan di browser ini.</p>';
-                showToast('⚠️ Bukti pembayaran tidak ditemukan');
+                const { error } = await nastelSupabase.from('orders').update(patch).eq('id', dbId);
+                if (error) throw error;
+                showToast(`✅ ${order.id}: ${nextStatus}`);
+                await renderCashierDashboard();
+            } catch (error) {
+                console.error('[Nastel] Gagal update status:', error);
+                showToast('❌ Status gagal diperbarui');
             }
         };
 
-        window.sendV2OrderWA = function(orderId) {
-            const order = getV2Orders().find(o => o.id === orderId);
+        window.viewV2PaymentProof = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
+            if (!order?.proofPath) { showToast('⚠️ Bukti pembayaran tidak tersedia'); return; }
+            const popup = window.open('', '_blank');
+            if (popup) popup.document.write('<title>Bukti Pembayaran</title><p style="font-family:sans-serif;padding:24px">Membuka bukti pembayaran private...</p>');
+            try {
+                const { data, error } = await nastelSupabase.storage.from('payment-proofs').createSignedUrl(order.proofPath, 90);
+                if (error) throw error;
+                if (popup) popup.location.href = data.signedUrl;
+                else window.open(data.signedUrl, '_blank');
+            } catch (error) {
+                if (popup) popup.close();
+                console.error('[Nastel] Gagal buka bukti:', error);
+                showToast('⚠️ Bukti gagal dibuka');
+            }
+        };
+
+        window.sendV2OrderWA = function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
             openV2WhatsApp(order);
         };
 
-        window.copyV2Order = async function(orderId) {
-            const order = getV2Orders().find(o => o.id === orderId);
+        window.copyV2Order = async function(dbId) {
+            const order = supabaseOrdersCache.find(o => o.dbId === dbId);
             if (!order) return;
-            const lines = [`${order.id} · ${getOrderCustomerLabel(order)}`, `Status: ${order.status}`];
+            const lines = [`${order.id} · ${getOrderCustomerLabel(order)}`, `Status: ${order.status}`, `Pembayaran: ${order.paymentStatus}`];
             order.items.forEach(item => lines.push(`${item.qty}x ${item.title} = ${formatRupiah(item.qty * item.price)}`));
             lines.push(`Total: ${formatRupiah(order.total)}`);
             try { await navigator.clipboard.writeText(lines.join('\n')); showToast('📋 Ringkasan order disalin'); }
@@ -3414,16 +3479,8 @@
         };
 
         document.getElementById('clearOrdersBtn').addEventListener('click', async () => {
-            if (!confirm('Hapus semua order dan bukti pembayaran di browser ini?')) return;
-            localStorage.removeItem(V2_ORDER_KEY);
-            localStorage.removeItem(V2_COUNTER_KEY);
-            localStorage.removeItem(V2_LAST_ORDER_KEY);
-            await clearV2PaymentProofs();
-            notifyV2Change('reset');
-            renderCashierDashboard();
-            document.getElementById('orderTrackResult').innerHTML = '<div class="v2-empty-state">Order sudah direset.</div>';
-            document.getElementById('trackOrderInput').value = '';
-            showToast('🗑️ Order & bukti direset');
+            showToast('↻ Memuat ulang order dari Supabase...');
+            await renderCashierDashboard();
         });
 
         // Ketersediaan menu (lokal). Struktur ini nantinya mudah dipindah ke tabel products di Supabase.
@@ -3526,9 +3583,6 @@
         });
         }
     });
-        cleanupExpiredV2PaymentProofs().then(count => {
-            if (count) console.info(`[Nastel] ${count} bukti pembayaran >${PROOF_RETENTION_DAYS} hari dibersihkan.`);
-        });
 
     </script>
 </body>
