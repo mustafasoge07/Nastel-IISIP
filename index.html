@@ -2200,7 +2200,7 @@
 
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height:1.5;">
                     <strong>📸 Bukti pembayaran divalidasi & dikompres sebelum disimpan.</strong><br>
-                    Bukti pembayaran disimpan private di Supabase. Setelah transaksi benar-benar final, bukti dijadwalkan terhapus otomatis dalam 14 hari; data transaksinya tetap tersimpan.
+                    Mode lokal menyimpan bukti maksimal 30 hari. Saat Supabase aktif, retensi 30 hari akan diterapkan pada Storage tanpa menghapus data transaksinya.
                 </p>
 
                 <div class="modal-footer" style="justify-content: center;">
@@ -2928,14 +2928,17 @@
                 String(Number(originalProofMeta?.size || proofFile.size || 0))
             );
 
-            const response = await fetch(`${NASTEL_SUPABASE_URL}/functions/v1/create-order`, {
-                method: 'POST',
-                headers: {
-                    apikey: NASTEL_SUPABASE_PUBLISHABLE_KEY,
-                    'x-client-id': getOrCreatePublicClientId()
-                },
-                body: form
-            });
+            const publicClientId = encodeURIComponent(getOrCreatePublicClientId());
+            const response = await fetch(
+                `${NASTEL_SUPABASE_URL}/functions/v1/create-order?client_id=${publicClientId}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        apikey: NASTEL_SUPABASE_PUBLISHABLE_KEY
+                    },
+                    body: form
+                }
+            );
 
             let payload = null;
             try { payload = await response.json(); } catch (_) {}
