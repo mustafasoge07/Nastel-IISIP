@@ -1414,6 +1414,20 @@
             pointer-events: none;
         }
 
+
+        /* ===== SUPABASE AUTH · KASIR ===== */
+        .cashier-auth-fields { display:grid; gap:10px; text-align:left; }
+        .cashier-auth-fields label { font-size:.75rem; font-weight:800; color:var(--text-muted); }
+        .cashier-auth-actions { display:flex; gap:8px; align-items:center; margin-top:4px; }
+        .cashier-auth-actions .v2-btn { flex:1; }
+        .cashier-auth-status { min-height:20px; margin:10px 0 0; font-size:.78rem; color:var(--text-muted); }
+        .cashier-auth-status.error { color:#b91c1c; }
+        .cashier-auth-status.ok { color:#15803d; }
+        .cashier-session-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; padding:10px 12px; border:1px solid var(--border-color); border-radius:14px; background:var(--bg-color); }
+        .cashier-session-meta { min-width:0; }
+        .cashier-session-meta strong { display:block; font-size:.82rem; }
+        .cashier-session-meta small { display:block; color:var(--text-muted); font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px; }
+        @media(max-width:480px) { .cashier-auth-actions { flex-direction:column; } .cashier-auth-actions .v2-btn { width:100%; } }
     </style>
 </head>
 
@@ -2204,16 +2218,29 @@
             </div>
             <div class="v2-modal-body">
                 <div id="cashierLogin" class="v2-login-box">
-                    <h3>Masuk Mode Kasir</h3>
-                    <p>PIN kasir lokal: <strong>2026</strong>. Ganti dengan autentikasi Supabase saat backend produksi diaktifkan.</p>
-                    <div class="v2-login-row">
-                        <input id="cashierPin" class="v2-input" type="password" inputmode="numeric" placeholder="Masukkan PIN Kasir">
-                        <button id="cashierLoginBtn" class="v2-btn dark" type="button">Masuk</button>
+                    <h3>Masuk Dashboard Kasir</h3>
+                    <p>Login menggunakan akun kasir/admin yang terdaftar di Supabase Auth dan tabel <strong>staff_users</strong>.</p>
+                    <div class="cashier-auth-fields">
+                        <label for="cashierEmail">Email kasir</label>
+                        <input id="cashierEmail" class="v2-input" type="email" inputmode="email" autocomplete="username" placeholder="nama@email.com">
+                        <label for="cashierPassword">Password</label>
+                        <input id="cashierPassword" class="v2-input" type="password" autocomplete="current-password" placeholder="Password akun kasir">
+                        <div class="cashier-auth-actions">
+                            <button id="cashierLoginBtn" class="v2-btn dark" type="button">Masuk dengan Supabase</button>
+                        </div>
                     </div>
+                    <div id="cashierAuthStatus" class="cashier-auth-status" role="status" aria-live="polite"></div>
                 </div>
 
                 <div id="cashierDashboard" hidden>
-                    <p class="v2-note">💡 <strong>Mode Lokal:</strong> order, status, dan bukti pembayaran disimpan di browser ini. Buka customer dan kasir di tab browser yang sama untuk simulasi update langsung. Supabase nanti menggantikan penyimpanan lokal agar sinkron lintas HP/perangkat.</p>
+                    <div class="cashier-session-bar">
+                        <div class="cashier-session-meta">
+                            <strong id="cashierSessionRole">Kasir terautentikasi</strong>
+                            <small id="cashierSessionEmail">-</small>
+                        </div>
+                        <button id="cashierLogoutBtn" class="v2-btn secondary" type="button">Keluar</button>
+                    </div>
+                    <p class="v2-note">🔐 <strong>Login Kasir sudah memakai Supabase Auth.</strong> Pada tahap ini data order/status masih memakai penyimpanan lokal sementara; integrasi order lintas perangkat ke Supabase akan menjadi tahap berikutnya.</p>
                     <div class="v2-stats">
                         <div class="v2-stat"><small>Order Masuk Hari Ini</small><strong id="statOrders">0</strong></div>
                         <div class="v2-stat"><small>Pendapatan Terverifikasi</small><strong id="statRevenue">Rp 0</strong></div>
@@ -2305,7 +2332,15 @@
         <p>© 2026 <strong>Warkop Nastel IISIP by MS7</strong> · Pesan mudah, santai, langsung ke kasir.</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // --- SUPABASE CLIENT · NASTEL ---
+        const NASTEL_SUPABASE_URL = "https://zjwzscbyvdzuweabzrzp.supabase.co";
+        const NASTEL_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_-a8AxJVQznVXP1hl5pAneg_xd2x6LGx";
+        const nastelSupabase = window.supabase.createClient(NASTEL_SUPABASE_URL, NASTEL_SUPABASE_PUBLISHABLE_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+
         const whatsappNumber1 = "6281220086018";
         const whatsappNumber2 = "6285215870526";
 
@@ -3112,21 +3147,89 @@
         });
         successModal.addEventListener('click', e => { if (e.target === successModal) closeOrderSuccess(); });
 
-        // Kasir dashboard.
+        // Kasir dashboard · Supabase Auth.
         const cashierModal = document.getElementById('cashierModal');
         const cashierLogin = document.getElementById('cashierLogin');
         const cashierDashboard = document.getElementById('cashierDashboard');
-        function openCashier() {
+        const cashierEmail = document.getElementById('cashierEmail');
+        const cashierPassword = document.getElementById('cashierPassword');
+        const cashierLoginBtn = document.getElementById('cashierLoginBtn');
+        const cashierLogoutBtn = document.getElementById('cashierLogoutBtn');
+        const cashierAuthStatus = document.getElementById('cashierAuthStatus');
+        const cashierSessionEmail = document.getElementById('cashierSessionEmail');
+        const cashierSessionRole = document.getElementById('cashierSessionRole');
+
+        function setCashierAuthStatus(message = '', type = '') {
+            cashierAuthStatus.textContent = message;
+            cashierAuthStatus.classList.remove('error', 'ok');
+            if (type) cashierAuthStatus.classList.add(type);
+        }
+
+        function setCashierLoginLoading(isLoading) {
+            cashierLoginBtn.disabled = isLoading;
+            cashierEmail.disabled = isLoading;
+            cashierPassword.disabled = isLoading;
+            cashierLoginBtn.textContent = isLoading ? 'Memeriksa akun...' : 'Masuk dengan Supabase';
+        }
+
+        async function getAuthorizedStaff(session) {
+            if (!session?.user?.id) return null;
+            const { data, error } = await nastelSupabase
+                .from('staff_users')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+            if (error) throw error;
+            if (!data || !['cashier', 'admin'].includes(data.role)) return null;
+            return { user: session.user, role: data.role };
+        }
+
+        function showCashierLogin(message = '') {
+            cashierLogin.hidden = false;
+            cashierDashboard.hidden = true;
+            if (message) setCashierAuthStatus(message, 'error');
+            setTimeout(() => cashierEmail.focus(), 80);
+        }
+
+        function showCashierDashboard(staff) {
+            cashierLogin.hidden = true;
+            cashierDashboard.hidden = false;
+            cashierSessionEmail.textContent = staff?.user?.email || 'Akun Supabase';
+            cashierSessionRole.textContent = staff?.role === 'admin' ? 'Admin Nastel' : 'Kasir Nastel';
+            setCashierAuthStatus('');
+            renderCashierDashboard();
+        }
+
+        async function resolveCashierSession() {
+            try {
+                const { data, error } = await nastelSupabase.auth.getSession();
+                if (error) throw error;
+                if (!data.session) { showCashierLogin(); return false; }
+                const staff = await getAuthorizedStaff(data.session);
+                if (!staff) {
+                    await nastelSupabase.auth.signOut();
+                    showCashierLogin('Akun ini tidak terdaftar sebagai kasir/admin Nastel.');
+                    return false;
+                }
+                showCashierDashboard(staff);
+                return true;
+            } catch (error) {
+                console.error('[Nastel Auth] Gagal memeriksa session:', error);
+                showCashierLogin('Gagal memeriksa session Supabase. Periksa koneksi internet.');
+                return false;
+            }
+        }
+
+        async function openCashier() {
             cashierModal.hidden = false;
             requestAnimationFrame(() => cashierModal.classList.add('active'));
             cashierModal.setAttribute('aria-hidden', 'false');
-            if (sessionStorage.getItem('nastel_v2_cashier') === '1') {
-                cashierLogin.hidden = true; cashierDashboard.hidden = false; renderCashierDashboard();
-            } else {
-                cashierLogin.hidden = false; cashierDashboard.hidden = true;
-                setTimeout(() => document.getElementById('cashierPin').focus(), 80);
-            }
+            cashierLogin.hidden = false;
+            cashierDashboard.hidden = true;
+            setCashierAuthStatus('Memeriksa session kasir...');
+            await resolveCashierSession();
         }
+
         function closeCashier(returnHome = true) {
             cashierModal.classList.remove('active');
             cashierModal.setAttribute('aria-hidden', 'true');
@@ -3136,6 +3239,7 @@
             }, 230);
             if (returnHome) window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
         document.getElementById('cashierOpenBtn').addEventListener('click', openCashier);
         document.getElementById('cashierCloseBtn').addEventListener('click', () => closeCashier(true));
         document.getElementById('cashierHomeBtn').addEventListener('click', () => closeCashier(true));
@@ -3143,13 +3247,63 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape' && cashierModal.classList.contains('active')) closeCashier(true);
         });
-        document.getElementById('cashierLoginBtn').addEventListener('click', () => {
-            const pin = document.getElementById('cashierPin').value.trim();
-            if (pin !== '2026') { showToast('PIN salah'); return; }
-            sessionStorage.setItem('nastel_v2_cashier', '1');
-            cashierLogin.hidden = true; cashierDashboard.hidden = false; renderCashierDashboard();
+
+        cashierLoginBtn.addEventListener('click', async () => {
+            const email = cashierEmail.value.trim();
+            const password = cashierPassword.value;
+            if (!email || !password) {
+                setCashierAuthStatus('Isi email dan password kasir terlebih dahulu.', 'error');
+                return;
+            }
+
+            setCashierLoginLoading(true);
+            setCashierAuthStatus('Menghubungkan ke Supabase...');
+            try {
+                const { data, error } = await nastelSupabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                const staff = await getAuthorizedStaff(data.session);
+                if (!staff) {
+                    await nastelSupabase.auth.signOut();
+                    throw new Error('Akun valid, tetapi belum terdaftar di staff_users sebagai cashier/admin.');
+                }
+                cashierPassword.value = '';
+                showCashierDashboard(staff);
+                showToast(`✅ Login ${staff.role === 'admin' ? 'admin' : 'kasir'} berhasil`);
+            } catch (error) {
+                console.error('[Nastel Auth] Login gagal:', error);
+                const message = /Invalid login credentials/i.test(error?.message || '')
+                    ? 'Email atau password salah.'
+                    : (error?.message || 'Login gagal. Coba lagi.');
+                setCashierAuthStatus(message, 'error');
+            } finally {
+                setCashierLoginLoading(false);
+            }
         });
-        document.getElementById('cashierPin').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('cashierLoginBtn').click(); });
+
+        [cashierEmail, cashierPassword].forEach(input => input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') cashierLoginBtn.click();
+        }));
+
+        cashierLogoutBtn.addEventListener('click', async () => {
+            cashierLogoutBtn.disabled = true;
+            try {
+                await nastelSupabase.auth.signOut();
+                cashierPassword.value = '';
+                showCashierLogin();
+                showToast('👋 Kasir berhasil logout');
+            } catch (error) {
+                console.error('[Nastel Auth] Logout gagal:', error);
+                showToast('⚠️ Logout gagal. Coba lagi.');
+            } finally {
+                cashierLogoutBtn.disabled = false;
+            }
+        });
+
+        nastelSupabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT' && cashierModal.classList.contains('active')) {
+                showCashierLogin();
+            }
+        });
 
         document.querySelectorAll('#cashierStatusFilters .v2-filter-btn').forEach(btn => btn.addEventListener('click', () => {
             document.querySelectorAll('#cashierStatusFilters .v2-filter-btn').forEach(b => b.classList.remove('active'));
