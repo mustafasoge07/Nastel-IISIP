@@ -1429,13 +1429,27 @@
         .cashier-session-meta small { display:block; color:var(--text-muted); font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px; }
         @media(max-width:480px) { .cashier-auth-actions { flex-direction:column; } .cashier-auth-actions .v2-btn { width:100%; } }
     </style>
+
+    <!-- PWA / Add to Home Screen -->
+    <meta name="theme-color" content="#ff6b35">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Nastel Kasir">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
+
 </head>
 
 <body>
     <header class="youth-header">
         <div class="header-top">
             <div class="youth-brand-mini">NASTEL <span>• IISIP</span></div>
-            <button id="themeToggle" class="btn-theme" aria-label="Ganti Tema">🌙 Mode Gelap</button>
+            <div class="header-actions">
+                <button id="pwaInstallBtn" class="pwa-install-btn" type="button" hidden>📲 Install App</button>
+                <button id="themeToggle" class="btn-theme" aria-label="Ganti Tema">🌙 Mode Gelap</button>
+            </div>
         </div>
         <div class="hero youth-hero">
             <div class="youth-hero-copy">
@@ -3387,6 +3401,7 @@
                 document.getElementById('statTopItem').textContent = top ? `${top[0]} (${top[1]})` : '-';
 
                 renderCashierOrders();
+                await loadMenuAvailability();
                 renderAvailabilityManager();
             } catch (error) {
                 console.error('[Nastel] Gagal memuat dashboard Supabase:', error);
@@ -3483,45 +3498,112 @@
             await renderCashierDashboard();
         });
 
-        // Ketersediaan menu (lokal). Struktur ini nantinya mudah dipindah ke tabel products di Supabase.
-        function getAvailabilityMap() {
-            try { return JSON.parse(localStorage.getItem(V2_AVAILABILITY_KEY)) || {}; }
-            catch (_) { return {}; }
+        // Ketersediaan menu ONLINE · Supabase menjadi sumber data utama.
+        // Customer yang sedang membuka halaman ikut menerima perubahan lewat Realtime.
+        const menuAvailabilityCache = new Map();
+        let menuRealtimeChannel = null;
+
+        function setMenuAvailabilityCache(name, available) {
+            const key = String(name || '').trim();
+            if (!key) return;
+            menuAvailabilityCache.set(key, available !== false);
         }
-        function saveAvailabilityMap(map) { localStorage.setItem(V2_AVAILABILITY_KEY, JSON.stringify(map)); }
+
         function isMenuAvailable(title) {
-            const map = getAvailabilityMap();
-            return map[title] !== false;
+            const key = String(title || '').trim();
+            return menuAvailabilityCache.has(key) ? menuAvailabilityCache.get(key) !== false : true;
         }
+
+        async function loadMenuAvailability() {
+            const { data, error } = await nastelSupabase
+                .from('menu_items')
+                .select('name,is_available');
+            if (error) throw error;
+
+            menuAvailabilityCache.clear();
+            (data || []).forEach(row => setMenuAvailabilityCache(row.name, row.is_available));
+            applyMenuAvailability();
+            if (cashierDashboard && !cashierDashboard.hidden) renderAvailabilityManager();
+            return data || [];
+        }
+
         function applyMenuAvailability() {
             menuCards.forEach(card => {
                 const title = card.querySelector('.menu-name').textContent.trim();
                 const button = card.querySelector('.btn-beli');
                 const available = isMenuAvailable(title);
                 card.classList.toggle('v2-sold-out', !available);
-                button.disabled = !available;
-                button.textContent = available ? '+ Keranjang' : 'Habis';
+                if (button) {
+                    button.disabled = !available;
+                    button.textContent = available ? '+ Keranjang' : 'Habis';
+                    button.setAttribute('aria-disabled', String(!available));
+                }
                 const badge = card.querySelector('.item-badge');
                 if (badge) badge.textContent = available ? 'MENU NASTEL' : 'HABIS';
             });
         }
+
         function renderAvailabilityManager() {
             const wrap = document.getElementById('availabilityManager');
+            if (!wrap) return;
             const items = [...menuCards].map(card => card.querySelector('.menu-name').textContent.trim());
             wrap.innerHTML = items.map(title => {
                 const available = isMenuAvailable(title);
-                return `<div class="v2-availability-item"><span>${escapeHTML(title)}</span><button class="v2-stock-toggle ${available ? 'on' : 'off'}" type="button" onclick="toggleV2Availability('${encodeURIComponent(title)}')">${available ? 'Tersedia' : 'Habis'}</button></div>`;
+                return `<div class="v2-availability-item"><span>${escapeHTML(title)}</span><button class="v2-stock-toggle ${available ? 'on' : 'off'}" type="button" onclick="toggleV2Availability('${encodeURIComponent(title)}', this)">${available ? 'Tersedia' : 'Habis'}</button></div>`;
             }).join('');
         }
-        window.toggleV2Availability = function(encodedTitle) {
+
+        window.toggleV2Availability = async function(encodedTitle, sourceButton) {
             const title = decodeURIComponent(encodedTitle);
-            const map = getAvailabilityMap();
-            map[title] = !isMenuAvailable(title);
-            saveAvailabilityMap(map);
-            applyMenuAvailability();
-            renderAvailabilityManager();
-            showToast(`${map[title] ? '✅' : '⛔'} ${title}: ${map[title] ? 'tersedia' : 'habis'}`);
+            const nextAvailable = !isMenuAvailable(title);
+            const oldText = sourceButton?.textContent;
+            if (sourceButton) {
+                sourceButton.disabled = true;
+                sourceButton.textContent = 'Menyimpan…';
+            }
+
+            try {
+                const { data, error } = await nastelSupabase
+                    .from('menu_items')
+                    .update({ is_available: nextAvailable })
+                    .eq('name', title)
+                    .select('name,is_available')
+                    .single();
+
+                if (error) throw error;
+                setMenuAvailabilityCache(data.name, data.is_available);
+                applyMenuAvailability();
+                renderAvailabilityManager();
+                showToast(`${data.is_available ? '✅' : '⛔'} ${title}: ${data.is_available ? 'tersedia' : 'habis'}`);
+            } catch (error) {
+                console.error('[Nastel] Gagal update ketersediaan menu:', error);
+                if (sourceButton) {
+                    sourceButton.disabled = false;
+                    sourceButton.textContent = oldText || (isMenuAvailable(title) ? 'Tersedia' : 'Habis');
+                }
+                showToast(`⚠️ Gagal update ${title}`);
+            }
         };
+
+        function startMenuAvailabilityRealtime() {
+            if (menuRealtimeChannel) return;
+            menuRealtimeChannel = nastelSupabase
+                .channel('nastel-menu-availability-live')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, payload => {
+                    if (payload.eventType === 'DELETE') {
+                        if (payload.old?.name) menuAvailabilityCache.delete(String(payload.old.name).trim());
+                    } else if (payload.new?.name) {
+                        setMenuAvailabilityCache(payload.new.name, payload.new.is_available);
+                    }
+                    applyMenuAvailability();
+                    if (cashierDashboard && !cashierDashboard.hidden) renderAvailabilityManager();
+                })
+                .subscribe(status => {
+                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                        console.warn('[Nastel] Realtime menu status:', status);
+                    }
+                });
+        }
 
         // Cegah item habis ditambahkan lewat modal detail.
         const originalModalBuyHandlerGuard = () => {
@@ -3535,7 +3617,11 @@
             if (!originalModalBuyHandlerGuard()) { e.stopImmediatePropagation(); closeModal(); }
         }, true);
 
-        applyMenuAvailability();
+        loadMenuAvailability().catch(error => {
+            console.error('[Nastel] Gagal memuat ketersediaan menu:', error);
+            showToast('⚠️ Status ketersediaan menu gagal dimuat');
+        });
+        startMenuAvailabilityRealtime();
         const lastV2Order = localStorage.getItem(V2_LAST_ORDER_KEY);
         if (lastV2Order) renderTrackedOrder(lastV2Order);
 
@@ -3583,6 +3669,78 @@
         });
         }
     });
+
+    
+
+        // --- PWA / ADD TO HOME SCREEN ---
+        let deferredPwaPrompt = null;
+        const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+
+        function isPwaStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+        }
+
+        function isIosDevice() {
+            return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+        }
+
+        function isSafariBrowser() {
+            const ua = window.navigator.userAgent;
+            return /safari/i.test(ua) && !/crios|fxios|edgios|chrome|android/i.test(ua);
+        }
+
+        function updatePwaInstallButton() {
+            if (!pwaInstallBtn) return;
+            if (isPwaStandalone()) {
+                pwaInstallBtn.hidden = true;
+                return;
+            }
+            // Android/Chromium: shown after beforeinstallprompt.
+            // iPhone/iPad Safari: show manual A2HS instruction.
+            pwaInstallBtn.hidden = !(deferredPwaPrompt || (isIosDevice() && isSafariBrowser()));
+        }
+
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredPwaPrompt = event;
+            updatePwaInstallButton();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPwaPrompt = null;
+            updatePwaInstallButton();
+            if (typeof showToast === 'function') showToast('✅ Nastel berhasil dipasang di Home Screen');
+        });
+
+        if (pwaInstallBtn) {
+            pwaInstallBtn.addEventListener('click', async () => {
+                if (deferredPwaPrompt) {
+                    deferredPwaPrompt.prompt();
+                    try {
+                        await deferredPwaPrompt.userChoice;
+                    } finally {
+                        deferredPwaPrompt = null;
+                        updatePwaInstallButton();
+                    }
+                    return;
+                }
+
+                if (isIosDevice()) {
+                    alert('Untuk memasang Nastel di iPhone:\\n\\n1. Buka website ini di Safari\\n2. Tekan tombol Share (kotak dengan panah ke atas)\\n3. Pilih “Add to Home Screen” / “Tambahkan ke Layar Utama”\\n4. Tekan Add / Tambah');
+                }
+            });
+        }
+
+        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+                    .then(() => console.info('[Nastel PWA] Service Worker aktif.'))
+                    .catch(error => console.warn('[Nastel PWA] Service Worker gagal:', error));
+            });
+        }
+
+        updatePwaInstallButton();
 
     </script>
 </body>
