@@ -1061,7 +1061,7 @@
         .proof-file-info.error { color:#b91c1c; }
 
 
-        .v2-menu-manager { margin-top: 18px; border: 1px solid var(--border-color); border-radius: 17px; overflow: hidden; }
+        .v2-menu-manager { margin: 0 0 14px; border: 1px solid var(--border-color); border-radius: 17px; overflow: hidden; background: var(--card-bg); }
         .v2-menu-manager summary { cursor: pointer; padding: 14px; font-weight: 900; background: var(--bg-color); }
         .v2-availability-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; padding: 12px; }
         .v2-availability-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 1px solid var(--border-color); border-radius: 13px; padding: 10px 11px; }
@@ -1428,6 +1428,33 @@
         .cashier-session-meta strong { display:block; font-size:.82rem; }
         .cashier-session-meta small { display:block; color:var(--text-muted); font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px; }
         @media(max-width:480px) { .cashier-auth-actions { flex-direction:column; } .cashier-auth-actions .v2-btn { width:100%; } }
+    
+        /* ===== V1 UX FIX · TRACKING + MENU MANAGER ===== */
+        .v2-menu-manager summary {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .v2-menu-manager summary::after {
+            content: "Buka";
+            flex: 0 0 auto;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: var(--border-color);
+            color: var(--text-muted);
+            font-size: .68rem;
+            font-weight: 900;
+        }
+        .v2-menu-manager[open] summary::after { content: "Tutup"; }
+
+        @media(max-width:480px) {
+            .v2-menu-manager { margin-bottom: 10px; }
+            .v2-menu-manager summary { padding: 12px; font-size: .83rem; }
+            .v2-availability-list { padding: 9px; gap: 7px; }
+        }
+
     </style>
 
     <!-- PWA / Add to Home Screen -->
@@ -2273,12 +2300,12 @@
                         <button id="clearOrdersBtn" class="v2-btn secondary" type="button">↻ Refresh</button>
                     </div>
 
-                    <div id="cashierOrders" class="v2-cashier-orders"></div>
-
-                    <details class="v2-menu-manager">
+                    <details class="v2-menu-manager" id="cashierMenuManager">
                         <summary>🍽️ Kelola Menu Tersedia / Habis</summary>
                         <div id="availabilityManager" class="v2-availability-list"></div>
                     </details>
+
+                    <div id="cashierOrders" class="v2-cashier-orders"></div>
                 </div>
             </div>
         </div>
@@ -3319,7 +3346,16 @@
             const id = successModal.dataset.orderId;
             closeOrderSuccess();
             renderTrackedOrder(id);
-            document.getElementById('orderTracking').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof window.openNastelOrderTracking === 'function') {
+                window.openNastelOrderTracking(true);
+            } else {
+                const trackingSection = document.getElementById('orderTracking');
+                if (trackingSection) {
+                    trackingSection.style.display = '';
+                    trackingSection.classList.remove('fade-out', 'is-hidden');
+                    trackingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         });
         document.getElementById('successWaBtn').addEventListener('click', () => {
             const order = getV2Orders().find(o => o.id === successModal.dataset.orderId);
@@ -3575,9 +3611,15 @@
                             ? `<br><small>↩️ Refund: <strong>${escapeHTML(order.refundStatus)}</strong>${order.refundAmount ? ` · ${formatRupiah(order.refundAmount)}` : ''}</small>`
                             : ''}
                         ${order.cancellationStatus !== 'Tidak ada'
-                            ? `<br><small>🧾 Pembatalan: <strong>${escapeHTML(order.cancellationStatus)}</strong>${order.cancellationReason ? ` · ${escapeHTML(order.cancellationReason)}` : ''}</small>`
+                            ? `<br><small>🧾 Pembatalan: <strong>${escapeHTML(order.cancellationStatus)}</strong></small>`
                             : ''}
-                    </div>`;
+                    </div>
+                    ${order.cancellationReason
+                        ? `<div class="v2-note" style="margin:10px 0 0;background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:var(--text-main)">
+                            📝 <strong>Alasan pembatalan/refund dari pembeli</strong><br>
+                            <span style="display:block;margin-top:5px;line-height:1.5">${escapeHTML(order.cancellationReason)}</span>
+                           </div>`
+                        : ''}`;
 
                 return `<div class="v2-cashier-order">
                     <div class="v2-order-card-top">
@@ -3837,6 +3879,7 @@
                 `Pembayaran: ${order.paymentStatus}`,
                 order.amountPaid == null ? null : `Nominal masuk: ${formatRupiah(order.amountPaid)}`,
                 order.cancellationStatus === 'Tidak ada' ? null : `Pembatalan: ${order.cancellationStatus}`,
+                order.cancellationReason ? `Alasan pembatalan/refund: ${order.cancellationReason}` : null,
                 order.refundStatus === 'Tidak ada' ? null : `Refund: ${order.refundStatus} ${order.refundAmount ? formatRupiah(order.refundAmount) : ''}`
             ].filter(Boolean);
             order.items.forEach(item => lines.push(`${item.qty}x ${item.title} = ${formatRupiah(item.qty * item.price)}`));
@@ -4003,24 +4046,48 @@
                 closeModal(); closePaymentModal(); closeCashier(); closeOrderSuccess(); cartDrawer.classList.remove('active');
             }
         });
-
-         // --- 9. TAMPILKAN ORDER TRACKING ---
+        // --- 9. ORDER TRACKING: TUTUP + BISA DIBUKA KEMBALI ---
         document.addEventListener('DOMContentLoaded', () => {
-        const trackSection = document.getElementById('orderTracking');
-        const closeBtn = document.getElementById('trackOrderCloseBtn');
+            const trackSection = document.getElementById('orderTracking');
+            const closeBtn = document.getElementById('trackOrderCloseBtn');
+            const trackLinks = document.querySelectorAll('a[href="#orderTracking"]');
 
-        if (closeBtn && trackSection) {
-            closeBtn.addEventListener('click', () => {
-            // Tambah efek pudar
-            trackSection.classList.add('fade-out');
-            
-            // Tunggu animasi 300ms selesai, lalu hilangkan total dari layout
-            setTimeout(() => {
-                trackSection.style.display = 'none';
-            }, 300);
+            if (!trackSection) return;
+
+            const openTrackingSection = (scroll = true) => {
+                trackSection.style.display = '';
+                requestAnimationFrame(() => {
+                    trackSection.classList.remove('fade-out', 'is-hidden');
+                    if (scroll) {
+                        trackSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            };
+
+            const closeTrackingSection = () => {
+                trackSection.classList.add('fade-out');
+                setTimeout(() => {
+                    if (trackSection.classList.contains('fade-out')) {
+                        trackSection.style.display = 'none';
+                    }
+                }, 300);
+            };
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeTrackingSection);
+            }
+
+            trackLinks.forEach(link => {
+                link.addEventListener('click', event => {
+                    event.preventDefault();
+                    openTrackingSection(true);
+                });
+            });
+
+            window.openNastelOrderTracking = openTrackingSection;
         });
-        }
-    });
+
+
 
     
 
