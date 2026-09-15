@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nastel-v1-customer-push-ready';
+const CACHE_NAME = 'nastel-v1-dashboard-finance-stats';
 const APP_SHELL = [
   './',
   './index.html',
