@@ -1517,6 +1517,19 @@
             transform: translate(-50%, 0);
         }
 
+    
+        /* ===== CUSTOMER ORDER PUSH ===== */
+        .v2-btn.customer-push-active,
+        #successNotifyBtn.customer-push-active {
+            background: rgba(34,197,94,.12);
+            color: #166534;
+            border-color: rgba(34,197,94,.35);
+        }
+        body.dark-mode .v2-btn.customer-push-active,
+        body.dark-mode #successNotifyBtn.customer-push-active {
+            color: #86efac;
+        }
+
     </style>
 
     <!-- PWA / Add to Home Screen -->
@@ -2385,8 +2398,12 @@
             <div style="color:var(--text-muted);font-size:.86rem">Simpan nomor ini untuk melihat status pesanan.</div>
             <div id="successOrderId" class="v2-success-id">NST-000000-000</div>
             <div id="successOrderInfo" style="font-size:.88rem;color:var(--text-muted)"></div>
+            <div style="margin-top:10px;padding:10px 12px;border:1px solid var(--border-color);border-radius:13px;background:var(--bg-color);font-size:.78rem;color:var(--text-muted);line-height:1.45">
+                🔔 Aktifkan notifikasi agar kamu langsung tahu saat pembayaran diverifikasi, pesanan diproses, siap diambil, pembatalan, atau refund berubah.
+            </div>
             <div class="v2-success-actions">
-                <button id="successTrackBtn" class="v2-btn" type="button">Lacak Pesanan</button>
+                <button id="successNotifyBtn" class="v2-btn" type="button">🔔 Aktifkan Notifikasi Pesanan</button>
+                <button id="successTrackBtn" class="v2-btn secondary" type="button">Lacak Pesanan</button>
                 <button id="successWaBtn" class="v2-btn secondary" type="button">💬 Kirim Ringkasan WA</button>
                 <button id="successCloseBtn" class="v2-btn secondary" type="button">Tutup</button>
             </div>
@@ -2976,6 +2993,191 @@
             return getTrackingTokens()[String(orderCode || '').trim().toUpperCase()] || null;
         }
 
+
+        const CUSTOMER_PUSH_ORDER_KEY = 'nastel_customer_push_orders_v1';
+
+        function getCustomerPushOrders() {
+            try { return JSON.parse(localStorage.getItem(CUSTOMER_PUSH_ORDER_KEY)) || {}; }
+            catch (_) { return {}; }
+        }
+
+        function markCustomerPushOrder(orderCode, endpoint) {
+            const map = getCustomerPushOrders();
+            map[String(orderCode || '').trim().toUpperCase()] = {
+                endpoint: String(endpoint || ''),
+                enabledAt: new Date().toISOString()
+            };
+            localStorage.setItem(CUSTOMER_PUSH_ORDER_KEY, JSON.stringify(map));
+        }
+
+        function unmarkCustomerPushOrder(orderCode) {
+            const map = getCustomerPushOrders();
+            delete map[String(orderCode || '').trim().toUpperCase()];
+            localStorage.setItem(CUSTOMER_PUSH_ORDER_KEY, JSON.stringify(map));
+        }
+
+        function customerPushMarked(orderCode) {
+            return Boolean(getCustomerPushOrders()[String(orderCode || '').trim().toUpperCase()]);
+        }
+
+        function arrayBufferToBase64Url(buffer) {
+            if (!buffer) return '';
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
+        async function ensureCustomerBrowserPushSubscription() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+                throw new Error('Perangkat/browser ini belum mendukung push notification.');
+            }
+
+            if (isIosLikeDevice() && !isStandalonePwa()) {
+                throw new Error('Di iPhone/iPad, tambahkan Nastel ke Home Screen dulu, lalu buka dari ikon Nastel.');
+            }
+
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                throw new Error(permission === 'denied'
+                    ? 'Izin notifikasi diblokir. Aktifkan dari pengaturan browser/perangkat.'
+                    : 'Izin notifikasi belum diberikan.');
+            }
+
+            const publicKey = await getVapidPublicKey();
+            const registration = await navigator.serviceWorker.ready;
+            let subscription = await registration.pushManager.getSubscription();
+
+            // If VAPID was rotated, discard the browser's old subscription.
+            if (subscription?.options?.applicationServerKey) {
+                const existingKey = arrayBufferToBase64Url(subscription.options.applicationServerKey);
+                if (existingKey && existingKey !== publicKey) {
+                    try { await subscription.unsubscribe(); } catch (_) {}
+                    subscription = null;
+                }
+            }
+
+            if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+            }
+
+            return subscription;
+        }
+
+        async function enableCustomerOrderPush(orderId) {
+            const cleanId = String(orderId || '').trim().toUpperCase();
+            const trackingToken = getTrackingToken(cleanId);
+
+            if (!trackingToken) {
+                showToast('⚠️ Token tracking order tidak tersedia di perangkat ini');
+                return;
+            }
+
+            try {
+                const subscription = await ensureCustomerBrowserPushSubscription();
+                const jsonSub = subscription.toJSON();
+
+                const { data, error } = await nastelSupabase.rpc('subscribe_public_order_push', {
+                    p_order_code: cleanId,
+                    p_tracking_token: trackingToken,
+                    p_endpoint: subscription.endpoint,
+                    p_p256dh: jsonSub?.keys?.p256dh || '',
+                    p_auth: jsonSub?.keys?.auth || '',
+                    p_user_agent: navigator.userAgent
+                });
+
+                if (error) throw error;
+
+                markCustomerPushOrder(cleanId, subscription.endpoint);
+                refreshCustomerPushButtons(cleanId);
+                showToast(`🔔 Notifikasi ${cleanId} aktif`, 4500);
+            } catch (error) {
+                console.error('[Nastel Customer Push] Aktivasi gagal:', error);
+                showToast(`⚠️ ${error?.message || 'Notifikasi pesanan gagal diaktifkan'}`, 5500);
+            }
+        }
+
+        async function disableCustomerOrderPush(orderId) {
+            const cleanId = String(orderId || '').trim().toUpperCase();
+            const trackingToken = getTrackingToken(cleanId);
+            if (!trackingToken) return;
+
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+
+                if (subscription) {
+                    await nastelSupabase.rpc('unsubscribe_public_order_push', {
+                        p_order_code: cleanId,
+                        p_tracking_token: trackingToken,
+                        p_endpoint: subscription.endpoint
+                    });
+                }
+
+                unmarkCustomerPushOrder(cleanId);
+                refreshCustomerPushButtons(cleanId);
+                showToast(`🔕 Notifikasi ${cleanId} dimatikan`);
+            } catch (error) {
+                console.error('[Nastel Customer Push] Nonaktif gagal:', error);
+                showToast('⚠️ Gagal menonaktifkan notifikasi pesanan');
+            }
+        }
+
+        window.toggleCustomerOrderPush = async function(orderId) {
+            const cleanId = String(orderId || '').trim().toUpperCase();
+            if (customerPushMarked(cleanId)) {
+                const disable = confirm(`Matikan notifikasi untuk ${cleanId}?`);
+                if (disable) await disableCustomerOrderPush(cleanId);
+                return;
+            }
+            await enableCustomerOrderPush(cleanId);
+        };
+
+        function customerPushButtonLabel(orderCode) {
+            return customerPushMarked(orderCode)
+                ? '🔔 Notifikasi Aktif'
+                : '🔔 Aktifkan Notifikasi Pesanan';
+        }
+
+        function refreshCustomerPushButtons(orderCode) {
+            const cleanId = String(orderCode || '').trim().toUpperCase();
+            const active = customerPushMarked(cleanId);
+
+            const successBtn = document.getElementById('successNotifyBtn');
+            if (successBtn && successModal?.dataset?.orderId === cleanId) {
+                successBtn.textContent = active ? '🔔 Notifikasi Aktif' : '🔔 Aktifkan Notifikasi Pesanan';
+                successBtn.classList.toggle('customer-push-active', active);
+            }
+
+            document.querySelectorAll(`[data-customer-push-order="${CSS.escape(cleanId)}"]`).forEach(btn => {
+                btn.textContent = active ? '🔔 Notifikasi Aktif' : '🔔 Aktifkan Notifikasi';
+                btn.classList.toggle('customer-push-active', active);
+            });
+        }
+
+        const customerNoticeDedupe = new Map();
+
+        function notifyCustomerInApp({ eventType, orderId, orderCode, title, body }) {
+            const key = `${eventType || 'event'}:${orderId || orderCode || body || ''}`;
+            const now = Date.now();
+            const last = customerNoticeDedupe.get(key) || 0;
+            if (now - last < 8000) return;
+            customerNoticeDedupe.set(key, now);
+
+            try { playCashierNoticeTone('normal'); } catch (_) {}
+            if (toast) toast.classList.add('cashier-alert');
+            showToast(`${title || '🔔 Update Pesanan'}${body ? ` · ${body}` : ''}`, 6000);
+
+            const cleanCode = String(orderCode || '').trim().toUpperCase();
+            const tracked = document.getElementById('trackOrderInput')?.value?.trim().toUpperCase();
+            if (cleanCode && tracked === cleanCode && getTrackingToken(cleanCode)) {
+                renderTrackedOrder(cleanCode).catch(() => {});
+            }
+        }
+
         function localDateParts(date = new Date()) {
             const yyyy = date.getFullYear();
             const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -3312,6 +3514,7 @@
                                 : `💬 Pesanan sudah tersimpan online. WhatsApp tetap tersedia sebagai konfirmasi tambahan.`}
                         </div>
                         <div class="v2-track-actions">
+                            <button class="v2-btn secondary ${customerPushMarked(order.id) ? 'customer-push-active' : ''}" data-customer-push-order="${escapeHTML(order.id)}" type="button" onclick="toggleCustomerOrderPush('${escapeHTML(order.id)}')">${escapeHTML(customerPushButtonLabel(order.id))}</button>
                             <button class="v2-btn" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">💬 WhatsApp Kasir</button>
                             <button class="v2-btn secondary" type="button" onclick="renderTrackedOrder('${escapeHTML(order.id)}')">↻ Refresh Status</button>
                             ${order.status === 'Menunggu Konfirmasi' && order.cancellationStatus === 'Tidak ada'
@@ -3412,6 +3615,7 @@
             successModal.dataset.orderId = order.id;
             successModal.classList.add('active');
             successModal.setAttribute('aria-hidden', 'false');
+            refreshCustomerPushButtons(order.id);
         }
         function closeOrderSuccess() {
             successModal.classList.remove('active');
@@ -3433,6 +3637,11 @@
                 }
             }
         });
+        document.getElementById('successNotifyBtn').addEventListener('click', async () => {
+            const id = successModal.dataset.orderId;
+            if (id) await toggleCustomerOrderPush(id);
+        });
+
         document.getElementById('successWaBtn').addEventListener('click', () => {
             const order = getV2Orders().find(o => o.id === successModal.dataset.orderId);
             openV2WhatsApp(order);
@@ -4475,7 +4684,12 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', event => {
                 if (event?.data?.type !== 'NASTEL_PUSH_FOREGROUND') return;
-                notifyCashierInApp(event.data.payload || {});
+                const payload = event.data.payload || {};
+                if (payload.audience === 'customer') {
+                    notifyCustomerInApp(payload);
+                } else {
+                    notifyCashierInApp(payload);
+                }
             });
         }
 
@@ -4512,19 +4726,37 @@
             event.preventDefault();
             deferredPwaPrompt = event;
             updatePwaInstallButton();
+        });
 
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('open') === 'kasir') {
+            const cashierOpen = params.get('open') === 'kasir';
+            const trackedOrder = String(params.get('track') || '').trim().toUpperCase();
+
+            if (cashierOpen) {
                 setTimeout(() => {
                     openCashier().catch(() => {});
-                    const cleanUrl = new URL(window.location.href);
-                    cleanUrl.searchParams.delete('open');
-                    cleanUrl.searchParams.delete('order');
-                    history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
                 }, 450);
             }
-        });
+
+            if (trackedOrder && getTrackingToken(trackedOrder)) {
+                setTimeout(() => {
+                    if (typeof window.openNastelOrderTracking === 'function') {
+                        window.openNastelOrderTracking(true);
+                    }
+                    const trackInput = document.getElementById('trackOrderInput');
+                    if (trackInput) trackInput.value = trackedOrder;
+                    renderTrackedOrder(trackedOrder).catch(() => {});
+                }, 550);
+            }
+
+            if (cashierOpen || trackedOrder) {
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('open');
+                cleanUrl.searchParams.delete('order');
+                cleanUrl.searchParams.delete('track');
+                history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+            }
         });
 
         window.addEventListener('appinstalled', () => {
