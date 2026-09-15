@@ -1325,9 +1325,11 @@
         .v2-modal-close,.v2-home-btn { border-radius:999px; }
         .v2-stat { border-radius:18px; background:var(--card-bg); }
         .v2-stat:nth-child(1) { box-shadow:inset 0 3px 0 var(--accent); }
-        .v2-stat:nth-child(2) { box-shadow:inset 0 3px 0 var(--primary); }
-        .v2-stat:nth-child(3) { box-shadow:inset 0 3px 0 var(--youth-lime); }
-        .v2-stat:nth-child(4) { box-shadow:inset 0 3px 0 var(--youth-pink); }
+        .v2-stat:nth-child(2) { box-shadow:inset 0 3px 0 #22c55e; }
+        .v2-stat:nth-child(3) { box-shadow:inset 0 3px 0 #ef4444; }
+        .v2-stat:nth-child(4) { box-shadow:inset 0 3px 0 #f59e0b; }
+        .v2-stat:nth-child(5) { box-shadow:inset 0 3px 0 var(--primary); }
+        .v2-stat:nth-child(6) { box-shadow:inset 0 3px 0 var(--youth-pink); }
         .v2-cashier-order { border-radius:19px; background:var(--card-bg); }
         .v2-success-card { border-radius:28px; }
         .v2-success-id { background:rgba(124,58,237,.08); color:var(--accent); }
@@ -1528,6 +1530,39 @@
         body.dark-mode .v2-btn.customer-push-active,
         body.dark-mode #successNotifyBtn.customer-push-active {
             color: #86efac;
+        }
+
+    
+        /* ===== CASHIER DAILY FINANCIAL SUMMARY ===== */
+        .v2-stats-finance {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .v2-stat em {
+            display:block;
+            margin-top:5px;
+            color:var(--text-muted);
+            font-size:.68rem;
+            font-style:normal;
+            font-weight:700;
+            line-height:1.35;
+        }
+        .v2-stat-success {
+            background:linear-gradient(180deg, rgba(34,197,94,.075), var(--card-bg));
+        }
+        .v2-stat-failed {
+            background:linear-gradient(180deg, rgba(239,68,68,.065), var(--card-bg));
+        }
+        .v2-stat-revenue {
+            background:linear-gradient(180deg, rgba(245,158,11,.08), var(--card-bg));
+        }
+        .v2-stat-success strong { color:#15803d; }
+        .v2-stat-failed strong { color:#b91c1c; }
+        .v2-stat-revenue strong { color:#a16207; }
+        body.dark-mode .v2-stat-success strong { color:#86efac; }
+        body.dark-mode .v2-stat-failed strong { color:#fca5a5; }
+        body.dark-mode .v2-stat-revenue strong { color:#fde68a; }
+        @media(max-width:720px) {
+            .v2-stats-finance { grid-template-columns:1fr 1fr; }
         }
 
     </style>
@@ -2361,11 +2396,13 @@
                     </div>
                     <div id="cashierPushStatus" class="cashier-push-status" role="status" aria-live="polite"></div>
                     <p class="v2-note">☁️ <strong>Mode Online Supabase aktif.</strong> Order, bukti pembayaran, status, dan dashboard kasir tersinkron lintas perangkat. Bukti pembayaran disimpan di bucket private.</p>
-                    <div class="v2-stats">
-                        <div class="v2-stat"><small>Order Masuk Hari Ini</small><strong id="statOrders">0</strong></div>
-                        <div class="v2-stat"><small>Pendapatan Terverifikasi</small><strong id="statRevenue">Rp 0</strong></div>
-                        <div class="v2-stat"><small>Order Aktif</small><strong id="statActive">0</strong></div>
-                        <div class="v2-stat"><small>Terlaris (Lunas)</small><strong id="statTopItem">-</strong></div>
+                    <div class="v2-stats v2-stats-finance">
+                        <div class="v2-stat" title="Semua order yang dibuat hari ini"><small>📥 Order Masuk Hari Ini</small><strong id="statOrders">0</strong></div>
+                        <div class="v2-stat v2-stat-success" title="Order selesai dengan pembayaran valid"><small>✅ Order Berhasil</small><strong id="statSuccess">0</strong></div>
+                        <div class="v2-stat v2-stat-failed" title="Order dibatalkan atau pembayaran ditolak"><small>⛔ Dibatalkan / Ditolak</small><strong id="statFailed">0</strong></div>
+                        <div class="v2-stat v2-stat-revenue" title="Pendapatan hanya dari order yang benar-benar selesai"><small>💰 Pendapatan Order Sukses</small><strong id="statRevenue">Rp 0</strong><em id="statRevenueMeta">dari 0 order sukses</em></div>
+                        <div class="v2-stat" title="Order yang masih menunggu, diproses, atau siap"><small>⏳ Order Aktif</small><strong id="statActive">0</strong></div>
+                        <div class="v2-stat" title="Menu paling banyak terjual dari order sukses hari ini"><small>🏆 Terlaris (Sukses)</small><strong id="statTopItem">-</strong></div>
                     </div>
 
                     <div class="v2-dashboard-toolbar">
@@ -4129,13 +4166,43 @@
             try {
                 await loadCashierOrders();
                 const todays = todayOrders();
-                const verifiedOrders = todays.filter(o => paymentIsProcessable(o) && o.status !== 'Dibatalkan');
+
+                // Finansial sinkron dengan transaksi yang benar-benar berhasil.
+                const successfulOrders = todays.filter(order =>
+                    order.status === 'Selesai' &&
+                    paymentIsProcessable(order) &&
+                    order.cancellationStatus !== 'Disetujui'
+                );
+
+                // Dihitung per-order agar batal + ditolak tidak dobel.
+                const failedOrders = todays.filter(order =>
+                    order.status === 'Dibatalkan' ||
+                    order.paymentStatus === 'Pembayaran ditolak' ||
+                    order.cancellationStatus === 'Disetujui'
+                );
+
+                const activeOrders = todays.filter(order =>
+                    !['Selesai', 'Dibatalkan'].includes(order.status) &&
+                    order.paymentStatus !== 'Pembayaran ditolak' &&
+                    order.cancellationStatus !== 'Disetujui'
+                );
+
+                const successfulRevenue = successfulOrders.reduce(
+                    (sum, order) => sum + Number(order.total || 0),
+                    0
+                );
+
                 document.getElementById('statOrders').textContent = todays.length;
-                document.getElementById('statRevenue').textContent = formatRupiah(verifiedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0));
-                document.getElementById('statActive').textContent = todays.filter(o => !['Selesai', 'Dibatalkan'].includes(o.status)).length;
+                document.getElementById('statSuccess').textContent = successfulOrders.length;
+                document.getElementById('statFailed').textContent = failedOrders.length;
+                document.getElementById('statRevenue').textContent = formatRupiah(successfulRevenue);
+                document.getElementById('statRevenueMeta').textContent = `dari ${successfulOrders.length} order sukses`;
+                document.getElementById('statActive').textContent = activeOrders.length;
 
                 const itemCounts = {};
-                verifiedOrders.forEach(o => o.items.forEach(item => itemCounts[item.title] = (itemCounts[item.title] || 0) + item.qty));
+                successfulOrders.forEach(order => order.items.forEach(item => {
+                    itemCounts[item.title] = (itemCounts[item.title] || 0) + Number(item.qty || 0);
+                }));
                 const top = Object.entries(itemCounts).sort((a,b) => b[1] - a[1])[0];
                 document.getElementById('statTopItem').textContent = top ? `${top[0]} (${top[1]})` : '-';
 
