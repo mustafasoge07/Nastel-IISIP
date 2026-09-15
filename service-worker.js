@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nastel-v1-production-push-fix-v2';
+const CACHE_NAME = 'nastel-v1-customer-push-ready';
 const APP_SHELL = [
   './',
   './index.html',
@@ -78,12 +78,13 @@ self.addEventListener('push', event => {
 
   const data = payload.data || {};
   const notice = {
+    audience: data.audience || payload.audience || 'staff',
     eventType: data.eventType || payload.eventType || 'event',
     orderId: data.orderId || payload.orderId || '',
     orderCode: data.orderCode || payload.orderCode || '',
     title: payload.title || 'Warkop Nastel',
     body: payload.body || 'Ada update baru.',
-    url: data.url || './?open=kasir'
+    url: data.url || (data.audience === 'customer' ? './' : './?open=kasir')
   };
 
   event.waitUntil((async () => {
@@ -105,7 +106,9 @@ self.addEventListener('push', event => {
     }
 
     const urgent = notice.eventType === 'cancellation_requested' ||
-                   notice.eventType === 'refund_pending';
+                   notice.eventType === 'refund_pending' ||
+                   String(notice.eventType || '').includes('cancellation') ||
+                   String(notice.eventType || '').includes('refund');
 
     // IMPORTANT: a real push ALWAYS creates a persistent system notification.
     // This remains valid even when the PWA page is not running.
