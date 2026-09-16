@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- NASTEL V2.3.1 · Order Chat + Revenue History · QRIS Download · Payment Methods · Stable Menu IDs · Auto-Purge Chat 24H · Supabase-Ready -->
+<!-- NASTEL V2.3.2 · Optimized Dashboard + Realtime Chat + Compact Mobile Menu + Search Button Fix · Revenue History · QRIS Download · Stable Menu IDs · Auto-Purge Chat 24H · Supabase-Ready -->
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warkop Nastel IISIP · V2.3.1 Order Chat + Revenue History</title>
+    <title>Warkop Nastel IISIP · V2.3.2 Optimized + Mobile</title>
     <style>
         :root {
             --bg-color: #fff8f3;
@@ -1565,7 +1565,7 @@
             .v2-stats-finance { grid-template-columns:1fr 1fr; }
         }
 
-        /* ===== NASTEL V2.3.1 · REVENUE HISTORY ===== */
+        /* ===== NASTEL V2.3.2 · REVENUE HISTORY ===== */
         .v2-revenue-history {
             margin: 0 0 16px;
             border: 1px solid var(--border-color);
@@ -1797,6 +1797,90 @@
             .order-chat-messages { max-height:48vh; }
         }
 
+
+        /* ===== NASTEL V2.3.2 · COMPACT MOBILE MENU + SEARCH ACTION ===== */
+        .youth-search .search-input { padding-right: 100px; }
+        .youth-search .search-submit {
+            position:absolute; right:8px; top:50%; transform:translateY(-50%);
+            width:40px; height:40px; border:0; border-radius:12px;
+            display:grid; place-items:center; background:var(--accent); color:#fff;
+            font-size:1.25rem; font-weight:950; cursor:pointer; pointer-events:auto;
+            box-shadow:0 6px 16px rgba(124,58,237,.18);
+        }
+        .youth-search .search-submit:hover { transform:translateY(-50%) scale(1.03); }
+        .youth-search .search-submit:active { transform:translateY(-50%) scale(.96); }
+        .youth-search .search-submit:focus-visible { outline:3px solid rgba(124,58,237,.22); outline-offset:2px; }
+        .youth-search .search-clear { right:52px; width:36px; height:36px; border-radius:11px; }
+
+        @media(max-width:760px) {
+            /* Dua item per baris di HP agar scroll jauh lebih pendek. */
+            .menu-grid {
+                grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+                gap:8px !important;
+            }
+            .menu-card {
+                min-width:0;
+                border-radius:15px !important;
+                box-shadow:0 7px 18px rgba(80,49,99,.075);
+            }
+            .menu-card img {
+                width:100%;
+                aspect-ratio:16 / 10 !important;
+                height:auto !important;
+                object-fit:cover;
+            }
+            .menu-info { padding:8px !important; }
+            .menu-name {
+                margin:0 0 5px !important;
+                min-height:2.05em;
+                font-size:.76rem !important;
+                line-height:1.25;
+                display:-webkit-box;
+                -webkit-box-orient:vertical;
+                -webkit-line-clamp:2;
+                overflow:hidden;
+            }
+            .menu-footer {
+                margin-top:5px !important;
+                gap:5px !important;
+                align-items:center !important;
+            }
+            .menu-price {
+                min-width:0;
+                font-size:.72rem !important;
+                line-height:1.15;
+                white-space:nowrap;
+            }
+            .btn-beli {
+                flex:0 0 auto;
+                padding:6px 7px !important;
+                font-size:.62rem !important;
+                line-height:1.1;
+                white-space:nowrap;
+                box-shadow:none !important;
+            }
+            .item-badge {
+                left:6px !important; top:6px !important;
+                padding:3px 6px !important;
+                font-size:.53rem !important;
+            }
+            .category-title {
+                margin:24px 0 10px !important;
+                font-size:1.12rem !important;
+            }
+            .menu-tools { margin-bottom:10px; }
+        }
+
+        @media(max-width:380px) {
+            /* Tetap dua kolom bahkan di HP kecil, dengan kartu lebih rapat. */
+            .menu-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:6px !important; }
+            .menu-info { padding:7px !important; }
+            .menu-name { font-size:.71rem !important; }
+            .menu-price { font-size:.66rem !important; }
+            .btn-beli { padding:5px 6px !important; font-size:.58rem !important; }
+            .item-badge { font-size:.49rem !important; }
+        }
+
     </style>
 
     <!-- PWA / Add to Home Screen -->
@@ -1837,8 +1921,8 @@
                 </div>
             </div>
             <div class="search-container youth-search">
-                <input type="text" id="searchMenu" class="search-input" placeholder="Cari nasi, kopi, mie, atau menu favoritmu...">
-                <span class="youth-search-icon">⌕</span>
+                <input type="text" id="searchMenu" class="search-input" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Cari nasi, kopi, mie, atau menu favoritmu...">
+                <button id="searchMenuBtn" class="youth-search-icon search-submit" type="button" aria-label="Cari menu" title="Cari menu">⌕</button>
             </div>
         </div>
         <div class="quick-info youth-steps" aria-label="Cara pesan">
@@ -2610,7 +2694,7 @@
 
 
     <!-- WARKOP NASTEL V2.3 · KASIR DASHBOARD + ORDER CHAT -->
-    <button id="cashierOpenBtn" class="v2-floating-cashier" type="button">🧾 Kasir V2.3</button>
+    <button id="cashierOpenBtn" class="v2-floating-cashier" type="button">🧾 Kasir Nastel</button>
 
     <div id="cashierModal" class="v2-modal" aria-hidden="true" hidden>
         <div class="v2-modal-panel">
@@ -2714,6 +2798,7 @@
                         <div id="availabilityManager" class="v2-availability-list"></div>
                     </details>
 
+                    <div class="v2-note" style="margin:0 0 10px">⚡ Dashboard menampilkan order hari ini + order lama yang masih aktif/perlu tindakan. Order selesai sebelumnya tetap tersedia di <strong>Riwayat Penjualan & Pendapatan</strong>.</div>
                     <div id="cashierOrders" class="v2-cashier-orders"></div>
                 </div>
             </div>
@@ -2735,7 +2820,7 @@
                 <button id="successNotifyBtn" class="v2-btn" type="button">🔔 Aktifkan Notifikasi Pesanan</button>
                 <button id="successChatBtn" class="v2-btn" type="button">💬 Chat dengan Kasir</button>
                 <button id="successTrackBtn" class="v2-btn secondary" type="button">Lacak Pesanan</button>
-                <button id="successWaBtn" class="v2-btn secondary" type="button">📱 WhatsApp (cadangan)</button>
+                <button id="successWaBtn" class="v2-btn secondary" type="button">📱 WhatsApp ke Kasir</button>
                 <button id="successCloseBtn" class="v2-btn secondary" type="button">Tutup</button>
             </div>
         </div>
@@ -3394,6 +3479,31 @@
         }
 
         searchInput.addEventListener('input', applyMenuView);
+
+        // Tombol ⌕ sekarang benar-benar dapat ditekan di HP.
+        const searchMenuBtn = document.getElementById('searchMenuBtn');
+        function submitMenuSearch() {
+            applyMenuView();
+            const keyword = searchInput.value.trim();
+            if (!keyword) {
+                searchInput.focus();
+                return;
+            }
+            const firstVisible = [...document.querySelectorAll('.menu-card')].find(card =>
+                !card.classList.contains('hidden-by-filter') &&
+                card.closest('section')?.style.display !== 'none'
+            );
+            if (firstVisible) firstVisible.scrollIntoView({ behavior:'smooth', block:'center' });
+            searchInput.blur();
+        }
+        searchMenuBtn?.addEventListener('click', submitMenuSearch);
+        searchInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitMenuSearch();
+            }
+        });
+
         sortMenu.addEventListener('change', applyMenuView);
 
         filterChips.forEach(chip => chip.addEventListener('click', () => {
@@ -3846,25 +3956,68 @@
             };
         }
 
+        const CASHIER_TODAY_LIMIT = 500;
+        const CASHIER_CARRYOVER_LIMIT = 120;
+        const CASHIER_ORDER_SELECT = `
+            id, order_code, tracking_token, customer_name, note, total,
+            status, payment_status, payment_method,
+            amount_paid, payment_verified_at,
+            cancellation_status, cancellation_reason, cancellation_requested_at,
+            refund_status, refund_amount, refund_completed_at,
+            proof_path, proof_name, proof_type, proof_size, proof_original_size,
+            proof_expires_at, proof_deleted_at, completed_at, cancelled_at,
+            chat_closed_at, chat_purge_at, chat_purged_at,
+            created_at, updated_at,
+            order_items ( id, item_name, unit_price, qty, subtotal )
+        `;
+
         async function loadCashierOrders() {
-            const { data, error } = await nastelSupabase
+            // V2.3.2: dashboard operasional tidak lagi menarik ratusan order lama setiap refresh.
+            // Ambil (1) order hari ini dan (2) order lama yang masih butuh tindakan kasir.
+            const todayStart = startOfLocalDay(new Date());
+            const todayStartIso = todayStart.toISOString();
+            const tomorrowIso = addLocalDays(todayStart, 1).toISOString();
+
+            const todayQuery = nastelSupabase
                 .from('orders')
-                .select(`
-                    id, order_code, tracking_token, customer_name, note, total,
-                    status, payment_status, payment_method,
-                    amount_paid, payment_verified_at,
-                    cancellation_status, cancellation_reason, cancellation_requested_at,
-                    refund_status, refund_amount, refund_completed_at,
-                    proof_path, proof_name, proof_type, proof_size, proof_original_size,
-                    proof_expires_at, proof_deleted_at, completed_at, cancelled_at,
-                    chat_closed_at, chat_purge_at, chat_purged_at,
-                    created_at, updated_at,
-                    order_items ( id, item_name, unit_price, qty, subtotal )
-                `)
+                .select(CASHIER_ORDER_SELECT)
+                .gte('created_at', todayStartIso)
+                .lt('created_at', tomorrowIso)
                 .order('created_at', { ascending: false })
-                .limit(300);
-            if (error) throw error;
-            supabaseOrdersCache = (data || []).map(mapSupabaseOrder);
+                .limit(CASHIER_TODAY_LIMIT);
+
+            const carryoverActiveQuery = nastelSupabase
+                .from('orders')
+                .select(CASHIER_ORDER_SELECT)
+                .lt('created_at', todayStartIso)
+                .in('status', ['Menunggu Konfirmasi', 'Diproses', 'Siap'])
+                .order('created_at', { ascending: false })
+                .limit(CASHIER_CARRYOVER_LIMIT);
+
+            const carryoverActionQuery = nastelSupabase
+                .from('orders')
+                .select(CASHIER_ORDER_SELECT)
+                .lt('created_at', todayStartIso)
+                .or('refund_status.eq.Menunggu,cancellation_status.eq.Diajukan')
+                .order('created_at', { ascending: false })
+                .limit(CASHIER_CARRYOVER_LIMIT);
+
+            const [todayResult, activeResult, actionResult] = await Promise.all([
+                todayQuery,
+                carryoverActiveQuery,
+                carryoverActionQuery
+            ]);
+
+            const firstError = todayResult.error || activeResult.error || actionResult.error;
+            if (firstError) throw firstError;
+
+            const unique = new Map();
+            [...(todayResult.data || []), ...(activeResult.data || []), ...(actionResult.data || [])]
+                .forEach(row => unique.set(row.id, row));
+
+            supabaseOrdersCache = [...unique.values()]
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .map(mapSupabaseOrder);
             return supabaseOrdersCache;
         }
 
@@ -3872,6 +4025,16 @@
             clearTimeout(dashboardReloadTimer);
             dashboardReloadTimer = setTimeout(() => {
                 if (cashierDashboard && !cashierDashboard.hidden) renderCashierDashboard();
+            }, 220);
+        }
+
+        let cashierChatUnreadTimer = null;
+        function scheduleCashierChatUnreadRefresh() {
+            clearTimeout(cashierChatUnreadTimer);
+            cashierChatUnreadTimer = setTimeout(async () => {
+                if (!cashierDashboard || cashierDashboard.hidden) return;
+                await loadCashierChatUnread();
+                renderCashierOrders();
             }, 180);
         }
 
@@ -3884,7 +4047,8 @@
                     scheduleDashboardReload();
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, scheduleDashboardReload)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'order_messages' }, scheduleDashboardReload)
+                // Pesan chat cukup memperbarui badge unread; tidak perlu reload semua order + stok menu.
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'order_messages' }, scheduleCashierChatUnreadRefresh)
                 .subscribe(status => {
                     if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
                         console.warn('[Nastel] Realtime order status:', status);
@@ -3951,9 +4115,10 @@
         }
 
 
-        // ===== NASTEL V2.3 · PRIVATE ORDER CHAT =====
+        // ===== NASTEL V2.3.2 · PRIVATE ORDER CHAT · REALTIME FIRST =====
         const CHAT_BUCKET = 'order-chat';
-        const CHAT_POLL_MS = 4500;
+        const CHAT_FALLBACK_POLL_MS = 30000;
+        const CHAT_REALTIME_DEBOUNCE_MS = 180;
         const orderChatModal = document.getElementById('orderChatModal');
         const orderChatTitle = document.getElementById('orderChatTitle');
         const orderChatStatus = document.getElementById('orderChatStatus');
@@ -3968,6 +4133,8 @@
         const cashierChatUnread = new Map();
         let activeOrderChat = null;
         let orderChatPollTimer = null;
+        let orderChatRealtimeChannel = null;
+        let orderChatRealtimeTimer = null;
         let orderChatLoading = false;
 
         function chatTimestamp(value) {
@@ -4095,11 +4262,56 @@
             }
         }
 
+        function scheduleActiveOrderChatRefresh() {
+            clearTimeout(orderChatRealtimeTimer);
+            orderChatRealtimeTimer = setTimeout(() => {
+                if (activeOrderChat && orderChatModal.classList.contains('active')) {
+                    fetchActiveOrderChat({ silent:true });
+                }
+            }, CHAT_REALTIME_DEBOUNCE_MS);
+        }
+
+        function stopOrderChatRealtime() {
+            clearTimeout(orderChatRealtimeTimer);
+            orderChatRealtimeTimer = null;
+            if (!orderChatRealtimeChannel) return;
+            const channel = orderChatRealtimeChannel;
+            orderChatRealtimeChannel = null;
+            nastelSupabase.removeChannel(channel).catch(() => {});
+        }
+
+        function startOrderChatRealtime() {
+            stopOrderChatRealtime();
+            if (!activeOrderChat?.orderCode) return;
+
+            const orderCode = activeOrderChat.orderCode;
+            const channelSuffix = String(orderCode).toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+            orderChatRealtimeChannel = nastelSupabase
+                .channel(`nastel-order-chat-${channelSuffix}-${Date.now()}`)
+                .on('postgres_changes', {
+                    event: '*', schema: 'public', table: 'order_messages',
+                    filter: `order_code=eq.${orderCode}`
+                }, scheduleActiveOrderChatRefresh)
+                .on('postgres_changes', {
+                    event: 'UPDATE', schema: 'public', table: 'orders',
+                    filter: `order_code=eq.${orderCode}`
+                }, scheduleActiveOrderChatRefresh)
+                .subscribe(status => {
+                    if (status === 'SUBSCRIBED') {
+                        console.debug('[Nastel Chat] Realtime aktif:', orderCode);
+                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                        console.warn('[Nastel Chat] Realtime bermasalah, fallback polling tetap aktif:', status);
+                    }
+                });
+        }
+
+        // Fallback tetap ada untuk kondisi Realtime/RLS/jaringan tidak mengirim event.
+        // Interval 30 detik jauh lebih ringan daripada polling lama 4,5 detik.
         function startOrderChatPolling() {
             clearInterval(orderChatPollTimer);
             orderChatPollTimer = setInterval(() => {
                 if (orderChatModal.classList.contains('active')) fetchActiveOrderChat({ silent:true });
-            }, CHAT_POLL_MS);
+            }, CHAT_FALLBACK_POLL_MS);
         }
 
         function stopOrderChatPolling() {
@@ -4111,10 +4323,12 @@
             orderChatModal.hidden = false;
             requestAnimationFrame(() => orderChatModal.classList.add('active'));
             orderChatModal.setAttribute('aria-hidden', 'false');
+            startOrderChatRealtime();
             startOrderChatPolling();
         }
 
         function closeOrderChatModal() {
+            stopOrderChatRealtime();
             stopOrderChatPolling();
             orderChatModal.classList.remove('active');
             orderChatModal.setAttribute('aria-hidden', 'true');
@@ -4227,12 +4441,16 @@
         async function loadCashierChatUnread() {
             cashierChatUnread.clear();
             try {
+                const orderCodes = [...new Set(supabaseOrdersCache.map(order => order.id).filter(Boolean))];
+                if (!orderCodes.length) return cashierChatUnread;
+
                 const { data, error } = await nastelSupabase
                     .from('order_messages')
                     .select('order_code')
                     .eq('sender_type','customer')
                     .is('staff_read_at', null)
-                    .limit(1000);
+                    .in('order_code', orderCodes)
+                    .limit(500);
                 if (error) throw error;
                 (data || []).forEach(row => cashierChatUnread.set(row.order_code, (cashierChatUnread.get(row.order_code) || 0) + 1));
             } catch (error) {
@@ -4337,7 +4555,7 @@
                         <div class="v2-track-actions">
                             <button class="v2-btn" type="button" onclick="openOrderChat('${escapeHTML(order.id)}')">💬 Chat dengan Kasir</button>
                             <button class="v2-btn secondary ${customerPushMarked(order.id) ? 'customer-push-active' : ''}" data-customer-push-order="${escapeHTML(order.id)}" type="button" onclick="toggleCustomerOrderPush('${escapeHTML(order.id)}')">${escapeHTML(customerPushButtonLabel(order.id))}</button>
-                            <button class="v2-btn secondary" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">📱 WhatsApp cadangan</button>
+                            <button class="v2-btn secondary" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">📱 WhatsApp ke Kasir</button>
                             <button class="v2-btn secondary" type="button" onclick="renderTrackedOrder('${escapeHTML(order.id)}')">↻ Refresh Status</button>
                             ${order.status === 'Menunggu Konfirmasi' && order.cancellationStatus === 'Tidak ada'
                                 ? `<button class="v2-btn danger" type="button" onclick="requestTrackedCancellation('${escapeHTML(order.id)}')">Ajukan Pembatalan</button>`
@@ -4952,7 +5170,7 @@
             return supabaseOrdersCache.filter(o => localDateParts(new Date(o.createdAt)).key === todayKey);
         }
 
-        // ===== NASTEL V2.3.1 · REVENUE HISTORY =====
+        // ===== NASTEL V2.3.2 · REVENUE HISTORY =====
         const cashierRevenueHistory = document.getElementById('cashierRevenueHistory');
         const revenueStartDate = document.getElementById('revenueStartDate');
         const revenueEndDate = document.getElementById('revenueEndDate');
