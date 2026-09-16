@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- NASTEL V2.2 FINAL YOUTH · Payment Methods · Stable Menu IDs · 14-Day Proof Retention · Supabase-Ready -->
+<!-- NASTEL V2.2.3 FINAL YOUTH · Downloadable QRIS · Payment Methods · Stable Menu IDs · 14-Day Proof Retention · Supabase-Ready -->
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warkop Nastel IISIP · V2.2.2 Final</title>
+    <title>Warkop Nastel IISIP · V2.2.3 Final</title>
     <style>
         :root {
             --bg-color: #fff8f3;
@@ -2421,8 +2421,10 @@
                     </div>
                     <div class="payment-method-detail" data-payment-detail="QRIS" hidden>
                         <strong>Scan QRIS Nastel</strong>
-                        <img src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxfTc765bP9sRYitNjULgOMqF4TxnHomQ1JzuE" alt="QRIS Pembayaran Warkop Nastel">
-                        <small style="color:var(--text-muted)">Bayar sesuai total pesanan, lalu upload bukti pembayaran.</small>
+                        <img id="qrisPaymentImage" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxfTc765bP9sRYitNjULgOMqF4TxnHomQ1JzuE" alt="QRIS Pembayaran Warkop Nastel">
+                        <small style="color:var(--text-muted);display:block">Bayar sesuai total pesanan, lalu upload bukti pembayaran.</small>
+                        <button id="downloadQrisBtn" class="payment-copy-btn" type="button" style="margin-top:10px">⬇️ Download / Simpan QRIS</button>
+                        <small style="display:block;margin-top:7px;color:var(--text-muted)">Bisa disimpan ke HP, jadi tidak perlu screenshot QR.</small>
                     </div>
                     <div class="payment-method-detail" data-payment-detail="DANA" hidden>
                         <strong>DANA · 089520282150</strong><br>
@@ -2823,6 +2825,9 @@
         const paymentMethodDetails = [...document.querySelectorAll('[data-payment-detail]')];
         const paymentMethodPlaceholder = document.getElementById('paymentMethodPlaceholder');
         const copyDanaBtn = document.getElementById('copyDanaBtn');
+        const downloadQrisBtn = document.getElementById('downloadQrisBtn');
+        const qrisPaymentImage = document.getElementById('qrisPaymentImage');
+        const QRIS_IMAGE_URL = qrisPaymentImage?.src || 'https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxfTc765bP9sRYitNjULgOMqF4TxnHomQ1JzuE';
         const MAX_PROOF_BYTES = 5 * 1024 * 1024;
         const TARGET_PROOF_BYTES = 300 * 1024;
         const MAX_UPLOAD_PROOF_BYTES = 500 * 1024;
@@ -2867,6 +2872,51 @@
                 showToast('📋 Nomor DANA disalin');
             } catch (_) {
                 showToast('DANA: 089520282150 a.n Alan');
+            }
+        });
+
+        // V2.2.3: download/simpan QRIS tanpa perlu screenshot.
+        // Android/desktop akan mengunduh file. Pada iPhone/iPad, jika didukung,
+        // Share Sheet dibuka agar gambar bisa disimpan ke Photos/Files.
+        downloadQrisBtn?.addEventListener('click', async () => {
+            const originalText = downloadQrisBtn.textContent;
+            downloadQrisBtn.disabled = true;
+            downloadQrisBtn.textContent = '⏳ Menyiapkan QRIS...';
+
+            try {
+                const response = await fetch(QRIS_IMAGE_URL, { mode: 'cors', cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const blob = await response.blob();
+                const type = String(blob.type || '').toLowerCase();
+                const ext = type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg';
+                const fileName = `QRIS-Warkop-Nastel.${ext}`;
+                const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+
+                // Lebih nyaman untuk iOS: user dapat memilih Save Image / Save to Files.
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent) && navigator.share && navigator.canShare?.({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'QRIS Warkop Nastel' });
+                    showToast('✅ QRIS siap disimpan dari menu Share');
+                    return;
+                }
+
+                const objectUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = objectUrl;
+                link.download = fileName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+                showToast('⬇️ QRIS berhasil diunduh');
+            } catch (error) {
+                console.warn('[Nastel] Download QRIS langsung gagal, membuka gambar:', error);
+                // Fallback tetap menghindari screenshot: buka file asli agar user bisa Save Image.
+                window.open(QRIS_IMAGE_URL, '_blank', 'noopener');
+                showToast('📱 QRIS dibuka. Pilih Simpan Gambar jika unduhan tidak otomatis.');
+            } finally {
+                downloadQrisBtn.disabled = false;
+                downloadQrisBtn.textContent = originalText;
             }
         });
 
