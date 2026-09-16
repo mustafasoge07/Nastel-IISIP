@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- NASTEL FINAL YOUTH · Optimized Mobile · Compressed Payment Proof · Supabase-Ready -->
+<!-- NASTEL V2.2 FINAL YOUTH · Payment Methods · Stable Menu IDs · 14-Day Proof Retention · Supabase-Ready -->
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warkop Nastel IISIP · Final Youth</title>
+    <title>Warkop Nastel IISIP · V2.2.2 Final</title>
     <style>
         :root {
             --bg-color: #fff8f3;
@@ -1565,6 +1565,93 @@
             .v2-stats-finance { grid-template-columns:1fr 1fr; }
         }
 
+    
+
+        /* ===== NASTEL V2.2 · PAYMENT METHOD ===== */
+        .payment-method-wrap {
+            margin: 14px 0 15px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            background: var(--bg-color);
+            text-align: left;
+        }
+        .payment-method-title {
+            margin: 0 0 10px;
+            font-size: .86rem;
+            font-weight: 900;
+        }
+        .payment-method-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .payment-method-option {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 46px;
+            padding: 9px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 13px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: .78rem;
+            font-weight: 850;
+            cursor: pointer;
+            text-align: center;
+            transition: border-color .18s, transform .18s, background .18s;
+        }
+        .payment-method-option:hover { transform: translateY(-1px); border-color: var(--accent); }
+        .payment-method-option:has(input:checked) {
+            border-color: var(--accent);
+            background: rgba(124,58,237,.09);
+            box-shadow: 0 0 0 2px rgba(124,58,237,.08);
+        }
+        .payment-method-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .payment-method-option.is-disabled {
+            opacity: .52;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .payment-method-detail {
+            margin-top: 11px;
+            padding: 12px;
+            border: 1px dashed var(--border-color);
+            border-radius: 13px;
+            background: var(--card-bg);
+            text-align: center;
+        }
+        .payment-method-detail[hidden] { display: none !important; }
+        .payment-method-detail img {
+            display: block;
+            width: min(180px, 100%);
+            margin: 0 auto 9px;
+            border-radius: 10px;
+        }
+        .payment-copy-btn {
+            margin-top: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 7px 11px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            font: inherit;
+            font-size: .75rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        @media(max-width:480px) {
+            .payment-method-grid { grid-template-columns: 1fr 1fr; }
+            .payment-method-option:last-child { grid-column: 1 / -1; }
+        }
+
     </style>
 
     <!-- PWA / Add to Home Screen -->
@@ -1611,7 +1698,7 @@
         </div>
         <div class="quick-info youth-steps" aria-label="Cara pesan">
             <div><span>01</span><strong>🍽️ Pilih menu</strong><small>Masukkan yang kamu mau ke keranjang.</small></div>
-            <div><span>02</span><strong>💳 Bayar</strong><small>QRIS / transfer lalu upload bukti.</small></div>
+            <div><span>02</span><strong>💳 Bayar</strong><small>QRIS / DANA lalu upload bukti.</small></div>
             <div><span>03</span><strong>📲 Pantau</strong><small>Lacak status dan konfirmasi via WhatsApp.</small></div>
         </div>
     </header>
@@ -1671,7 +1758,7 @@
         <section id="makanan" data-category="makanan">
             <h2 class="category-title">🍛 Menu Makanan</h2>
             <div class="menu-grid">
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_indomie_goreng_biasa">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxlZlIL36xeWNzogm7rPXdLwVZcjbKuUl1SEt2" alt="Aneka Indomie Goreng Biasa">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Indomie Goreng Biasa</h3>
@@ -1682,7 +1769,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_indomie_goreng_telur">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxVlvR332inYBiH2QTPN4ktjzM1LRy0v8Wxqh6" alt="Aneka Indomie Goreng Telur">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Indomie Goreng Telur</h3>
@@ -1693,7 +1780,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_indomie_kuah_biasa">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx4gcPddjAxPtG7HYnouw9zqjSJfivOyU68WTX" alt="Aneka Indomie Kuah Biasa">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Indomie Kuah Biasa</h3>
@@ -1704,7 +1791,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_indomie_kuah_telur">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxGApQkhWOQJwyA4g1KthlPsxpRnTa8VX0UMkz" alt="Aneka Indomie Kuah Telur">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Indomie Kuah Telur</h3>
@@ -1715,7 +1802,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="kwetiau_goreng">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxIeG0VbnlAdygxDb3RcSpZUk0VnftmWCNBYT9" alt="Kwetiau Goreng">
                     <div class="menu-info">
                         <h3 class="menu-name">Kwetiau Goreng</h3>
@@ -1726,7 +1813,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="mie_tek_tek">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxdHSSe872muZ5QJ8URHxOsTfq4iaPhYDoeLvI" alt="Mie Tek Tek">
                     <div class="menu-info">
                         <h3 class="menu-name">Mie Tek Tek</h3>
@@ -1737,7 +1824,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="nasi_ancur">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxaJRYkWVWTG1BEQuhwiN0l4kpHm5bv9PoacJf" alt="Nasi Ancur">
                     <div class="menu-info">
                         <h3 class="menu-name">Nasi Ancur</h3>
@@ -1748,7 +1835,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="nasi_goreng_nasi_goreng_kampung_telur_ceplok">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxfwM8opbP9sRYitNjULgOMqF4TxnHomQ1JzuE" alt="Nasi Goreng / Nasi Goreng Kampung + Telur ceplok">
                     <div class="menu-info">
                         <h3 class="menu-name">Nasi Goreng / Nasi Goreng Kampung <strong>+</strong>Telur Ceplok</h3>
@@ -1759,7 +1846,7 @@
                     </div>
                 </div>
 
-                 <div class="menu-card">
+                 <div class="menu-card" data-menu-id="nasi_goreng_nasi_goreng_kampung">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxRFYMoKWKYjJ96dwysPpfQDnhvHEMgUzLV2b1" alt="Nasi Goreng / Nasi Goreng Kampung">
                     <div class="menu-info">
                         <h3 class="menu-name">Nasi Goreng / Nasi Goreng Kampung</h3>
@@ -1770,7 +1857,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="nasi_telur">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxR2c0iPWKYjJ96dwysPpfQDnhvHEMgUzLV2b1" alt="Nasi Telur">
                     <div class="menu-info">
                         <h3 class="menu-name">Nasi Telur</h3>
@@ -1781,7 +1868,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="nastel_magelangan">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxd8Evom72muZ5QJ8URHxOsTfq4iaPhYDoeLvI" alt="Nastel / Magelangan">
                     <div class="menu-info">
                         <h3 class="menu-name">Nastel / Magelangan</h3>
@@ -1792,7 +1879,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="omelette">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxp8piuICIBaMjdphFlywRCG3WEv9tZVTxsUXH" alt="Omelette">
                     <div class="menu-info">
                         <h3 class="menu-name">Omelette</h3>
@@ -1803,7 +1890,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="omelette_nasi">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxb5zqSgszxJDoBIhW0jKP5v4SRATMmU3H9wGX" alt="Omelette + Nasi">
                     <div class="menu-info">
                         <h3 class="menu-name">Omelette + Nasi</h3>
@@ -1814,7 +1901,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="otak_otak">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxiuzqVCZQBzdJw5mGE4aUjy329rRFgs0YpDef" alt="Otak-Otak">
                     <div class="menu-info">
                         <h3 class="menu-name">Otak-Otak</h3>
@@ -1827,7 +1914,7 @@
 
                 
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="sosis_goreng">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxGAJCmDfOQJwyA4g1KthlPsxpRnTa8VX0UMkz" alt="Sosis Goreng">
                     <div class="menu-info">
                         <h3 class="menu-name">Sosis Goreng</h3>
@@ -1845,7 +1932,7 @@
             <h2 class="category-title">☕ Menu Minuman</h2>
             <div class="menu-grid">
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="abc_klepon_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxA6oHx3tHO4joK6trvEITMe1pgFzaf7qdkxwG" alt="ABC Klepon Es">
                     <div class="menu-info">
                         <h3 class="menu-name">ABC Klepon (Es)</h3>
@@ -1856,7 +1943,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="abc_klepon_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxyNKuhXLnUcAdqFvkjBuPZGCHXizmbV24ofOL" alt="ABC Klepon Panas">
                     <div class="menu-info">
                         <h3 class="menu-name">ABC Klepon (Panas)</h3>
@@ -1867,7 +1954,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="amh_jahe_merah_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxSSldGKXRkHu6vdZjLIqltDr1cKmi8xnX4Jgp" alt="AMH Jahe Merah (Panas)">
                     <div class="menu-info">
                         <h3 class="menu-name">AMH Jahe Merah (Panas)</h3>
@@ -1878,7 +1965,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_kopi_abc_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxchegxr84lPArfRNu9q27kiOZDWY0UTV5JBvo" alt="Aneka kopi ABC Panas">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka kopi ABC (Panas)</h3>
@@ -1889,7 +1976,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_chocolatos_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxajrPGdVWTG1BEQuhwiN0l4kpHm5bv9PoacJf" alt="Aneka Chocolatos">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Chocolatos (Es)</h3>
@@ -1900,7 +1987,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_chocolatos_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx3i6XGyGaN5LcByVGXO6aq2UPQ1diuDjTe3v8" alt="Aneka Chocolatos">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Chocolatos (Panas)</h3>
@@ -1911,7 +1998,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_dancow_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxdZixkB72muZ5QJ8URHxOsTfq4iaPhYDoeLvI" alt="Aneka Dancow">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Dancow (Es)</h3>
@@ -1922,7 +2009,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_dancow_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxBwv0rpD9OB8WV5isGLu1mfeayqKYnAvhHdST" alt="Dancow">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Dancow (Panas)</h3>
@@ -1933,7 +2020,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_energen_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx7fi1gVapFqzBxRCgw0pJTuSeks6M1PGXtdLy" alt="Energen">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Energen (Panas)</h3>
@@ -1944,7 +2031,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_good_day_dingin_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx5hizA6Bl3Rwx0kyHWsYELjdzaS18mqf2IoAB" alt="Aneka Good Day Dingin">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Good Day Dingin/Es</h3>
@@ -1955,7 +2042,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_good_day_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxbBAxAkszxJDoBIhW0jKP5v4SRATMmU3H9wGX" alt="Aneka Good Day Panas">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Good Day Panas</h3>
@@ -1966,7 +2053,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_nutri_sari_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxs56XaBJVo68GkjqyRveMzOXFPaTi5JHNKfwd" alt="Aneka Nutri sari">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Nutri sari (Es)</h3>
@@ -1977,7 +2064,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_pop_ice">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxpJuGrhCIBaMjdphFlywRCG3WEv9tZVTxsUXH" alt="POP ICE">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Pop ice</h3>
@@ -1988,7 +2075,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="aneka_teajus">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxA8oeUCtHO4joK6trvEITMe1pgFzaf7qdkxwG" alt="Aneka Teajus">
                     <div class="menu-info">
                         <h3 class="menu-name">Aneka Teajus</h3>
@@ -1999,7 +2086,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="drink_bang_bang_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxNgUBOfq4kb7O0gHWi1pyxA9oBFswjecEJYIr" alt="Drink Bang Bang">
                     <div class="menu-info">
                         <h3 class="menu-name">Drink Bang Bang (Es)</h3>
@@ -2010,7 +2097,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="drink_bang_bang_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxh4LnwKk6dmEYLlXtKAufsRaU8xBS5M9b72jg" alt="Drink Bang Bang">
                     <div class="menu-info">
                         <h3 class="menu-name">Drink Bang Bang (Panas)</h3>
@@ -2021,7 +2108,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="kopi_kapal_api_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxLNc6XjwTA2R85SCEHQ9O1nYJDuTp0iUedk3m" alt="Kopi Kapal Api Panas">
                     <div class="menu-info">
                         <h3 class="menu-name">Kopi Kapal Api (Panas)</h3>
@@ -2032,7 +2119,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="kopi_liong_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx1l6LLcFUwP5ImYxcCK1JQ9MpidauSeOrVfWN" alt="Kopi Liong Panas">
                     <div class="menu-info">
                         <h3 class="menu-name">Kopi Liong (Panas)</h3>
@@ -2043,7 +2130,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="max_tea_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxdCIFgSW72muZ5QJ8URHxOsTfq4iaPhYDoeLv" alt="Max Tea">
                     <div class="menu-info">
                         <h3 class="menu-name">Max Tea (Es)</h3>
@@ -2054,7 +2141,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="max_tea_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxX8brW4RoagAvcK1TlCkh79ZisQrW5Bwxt0Rm" alt="Max Tea">
                     <div class="menu-info">
                         <h3 class="menu-name">Max Tea (Panas)</h3>
@@ -2065,7 +2152,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="milo_dingin_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx4kCmfaOjAxPtG7HYnouw9zqjSJfivOyU68WT" alt="Milo Dingin">
                     <div class="menu-info">
                         <h3 class="menu-name">Milo Dingin/Es</h3>
@@ -2076,7 +2163,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="milo_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx9FgphmdzwYoW2yiBUMaTCxv5rP3ZNpAhdSOf" alt="Milo Panas">
                     <div class="menu-info">
                         <h3 class="menu-name">Milo (Panas)</h3>
@@ -2087,7 +2174,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="ovaltine_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxCsJG0FvfjP1Np7k26E5drQfIzoyseYtWhFa8" alt="Ovaltine">
                     <div class="menu-info">
                         <h3 class="menu-name">Ovaltine (Es)</h3>
@@ -2098,7 +2185,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="ovaltine_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx4kdR61xjAxPtG7HYnouw9zqjSJfivOyU68WT" alt="Ovaltine">
                     <div class="menu-info">
                         <h3 class="menu-name">Ovaltine (Panas)</h3>
@@ -2109,7 +2196,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="susu_jahe_anget_sari_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx7OzkDcpFqzBxRCgw0pJTuSeks6M1PGXtdLyY" alt="Susu Jahe Anget Sari">
                     <div class="menu-info">
                         <h3 class="menu-name">Susu Jahe Anget Sari (Panas)</h3>
@@ -2120,7 +2207,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="teh_manis_panas_dingin">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxtogSln94yz5Hcih7UKAmX9o1kRV8SPb62n0E" alt="Teh Manis Panas/Dingin">
                     <div class="menu-info">
                         <h3 class="menu-name">Teh Manis Panas/Dingin</h3>
@@ -2131,7 +2218,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="tora_bika_capucino_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxLpC2ZgTA2R85SCEHQ9O1nYJDuTp0iUedk3mo" alt="Tora Bika Capucino">
                     <div class="menu-info">
                         <h3 class="menu-name">Tora Bika Capucino (Es)</h3>
@@ -2142,7 +2229,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="tora_bika_capucino_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx2XF2ZWdzn0yWPkjguxSEYFhUdKIerJBVq4Gi" alt="ToraBika Capucino">
                     <div class="menu-info">
                         <h3 class="menu-name">Tora Bika Capucino (Panas)</h3>
@@ -2153,7 +2240,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="tora_bika_creamy_latte_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxhjd5xMk6dmEYLlXtKAufsRaU8xBS5M9b72jg" alt="ToraBika Creamy Latte">
                     <div class="menu-info">
                         <h3 class="menu-name">Tora Bika Creamy Latte (Es)</h3>
@@ -2164,7 +2251,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="tora_bika_creamy_latte_panas">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx9FJwccdzwYoW2yiBUMaTCxv5rP3ZNpAhdSOf" alt="Tora Bika Creamy Latte">
                     <div class="menu-info">
                         <h3 class="menu-name">Tora Bika Creamy Latte (Panas)</h3>
@@ -2182,7 +2269,7 @@
         <section id="Other/Lainnya" data-category="Other/Lainnya">
             <h2 class="category-title">☕ Menu Lainnya</h2>
             <div class="menu-grid">
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="nasi">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxtbcKm694yz5Hcih7UKAmX9o1kRV8SPb62n0E" alt="Nasi">
                     <div class="menu-info">
                         <h3 class="menu-name">Nasi</h3>
@@ -2193,7 +2280,7 @@
                     </div>
                 </div>
 
-                 <div class="menu-card">
+                 <div class="menu-card" data-menu-id="gorengan">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxacsQboVWTG1BEQuhwiN0l4kpHm5bv9PoacJf" alt="Gorengan">
                     <div class="menu-info">
                         <h3 class="menu-name">Gorengan</h3>
@@ -2204,7 +2291,7 @@
                     </div>
                 </div>
 
-                 <div class="menu-card">
+                 <div class="menu-card" data-menu-id="air_putih_es">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxsHvKkyJVo68GkjqyRveMzOXFPaTi5JHNKfwd" alt="Air Putih Es">
                     <div class="menu-info">
                         <h3 class="menu-name">Air Putih Es</h3>
@@ -2215,7 +2302,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="es_batu">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxk2JuGwMGNPl2Le4vwRcfSzaYp0dBhy7JKou8" alt="Es Batu">
                     <div class="menu-info">
                         <h3 class="menu-name">Es Batu</h3>
@@ -2226,7 +2313,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="ades_600ml">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx4Kgp9BjAxPtG7HYnouw9zqjSJfivOyU68WTX" alt="Ades">
                     <div class="menu-info">
                         <h3 class="menu-name">Ades 600ml</h3>
@@ -2237,7 +2324,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="fanta_250ml">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxipkYqxZQBzdJw5mGE4aUjy329rRFgs0YpDef" alt="fanta">
                     <div class="menu-info">
                         <h3 class="menu-name">Fanta 250ml</h3>
@@ -2248,7 +2335,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="coca_cola_250ml">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxpbIpH9bCIBaMjdphFlywRCG3WEv9tZVTxsUX" alt="coca cola">
                     <div class="menu-info">
                         <h3 class="menu-name">Coca Cola 250ml</h3>
@@ -2259,7 +2346,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="sprite_250ml">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxpbZj4J2CIBaMjdphFlywRCG3WEv9tZVTxsUX" alt="sprite">
                     <div class="menu-info">
                         <h3 class="menu-name">sprite 250ml</h3>
@@ -2270,7 +2357,7 @@
                     </div>
                 </div>
 
-                <div class="menu-card">
+                <div class="menu-card" data-menu-id="frestea_350ml">
                     <img loading="lazy" decoding="async" src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBx5KcQv4Bl3Rwx0kyHWsYELjdzaS18mqf2IoAB" alt="frestea">
                     <div class="menu-info">
                         <h3 class="menu-name">Frestea 350ml</h3>
@@ -2311,15 +2398,39 @@
                 <div id="paymentTotal"
                     style="font-size: 1.4rem; font-weight: bold; color: var(--accent); margin: 10px 0;">Rp 0</div>
 
-                <!-- Area QRIS atau Rekening -->
-                <div
-                    style="background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--border-color);">
-                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 0.9rem;">Scan QRIS / Transfer Bank</p>
-                    <img src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxfTc765bP9sRYitNjULgOMqF4TxnHomQ1JzuE" alt="QRIS Pembayaran Warkop Nastel"
-                        style="max-width: 180px; width: 100%; border-radius: 8px; margin-bottom: 8px;">
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        <strong>BCA:</strong> -- a.n Warkop Nastel<br>
-                        <strong>DANA:</strong> 089520282150 a.n Alan
+                <!-- PILIHAN METODE PEMBAYARAN -->
+                <div class="payment-method-wrap">
+                    <p class="payment-method-title">Pilih metode pembayaran</p>
+                    <div class="payment-method-grid" role="radiogroup" aria-label="Metode pembayaran">
+                        <label class="payment-method-option">
+                            <input type="radio" name="paymentMethod" value="QRIS">
+                            <span>▦ QRIS</span>
+                        </label>
+                        <label class="payment-method-option">
+                            <input type="radio" name="paymentMethod" value="DANA">
+                            <span>💳 DANA</span>
+                        </label>
+                        <label class="payment-method-option is-disabled" title="Rekening bank belum dikonfigurasi">
+                            <input type="radio" name="paymentMethod" value="Transfer Bank" disabled>
+                            <span>🏦 Transfer Bank · belum tersedia</span>
+                        </label>
+                    </div>
+
+                    <div id="paymentMethodPlaceholder" class="payment-method-detail">
+                        Pilih QRIS atau DANA untuk melihat instruksi pembayaran.
+                    </div>
+                    <div class="payment-method-detail" data-payment-detail="QRIS" hidden>
+                        <strong>Scan QRIS Nastel</strong>
+                        <img src="https://dcpmtwbyp7.ufs.sh/f/75hB4NpFqzBxfTc765bP9sRYitNjULgOMqF4TxnHomQ1JzuE" alt="QRIS Pembayaran Warkop Nastel">
+                        <small style="color:var(--text-muted)">Bayar sesuai total pesanan, lalu upload bukti pembayaran.</small>
+                    </div>
+                    <div class="payment-method-detail" data-payment-detail="DANA" hidden>
+                        <strong>DANA · 089520282150</strong><br>
+                        <span style="font-size:.82rem;color:var(--text-muted)">a.n Alan</span><br>
+                        <button id="copyDanaBtn" class="payment-copy-btn" type="button">Salin Nomor DANA</button>
+                    </div>
+                    <div class="payment-method-detail" data-payment-detail="Transfer Bank" hidden>
+                        <strong>Transfer Bank belum tersedia.</strong>
                     </div>
                 </div>
 
@@ -2337,7 +2448,7 @@
 
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height:1.5;">
                     <strong>📸 Bukti pembayaran divalidasi & dikompres sebelum disimpan.</strong><br>
-                    Mode lokal menyimpan bukti maksimal 30 hari. Saat Supabase aktif, retensi 30 hari akan diterapkan pada Storage tanpa menghapus data transaksinya.
+                    Bukti pembayaran disimpan selama transaksi berlangsung. Setelah pesanan selesai/dibatalkan dan proses refund selesai, bukti dijadwalkan untuk dibersihkan 14 hari kemudian tanpa menghapus data transaksinya.
                 </p>
 
                 <div class="modal-footer" style="justify-content: center;">
@@ -2529,17 +2640,19 @@
         const modalDesc = document.getElementById('modalDesc');
         const modalBuyBtn = document.getElementById('modalBuyBtn');
 
-        let currentActiveItem = { title: '', price: '' };
+        let currentActiveItem = { id: '', title: '', price: '' };
 
         menuCards.forEach(card => {
             card.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-beli')) return;
+                // Tombol + Keranjang ditangani oleh satu delegated handler di bawah.
+                if (e.target.closest('.btn-beli')) return;
 
                 const imgUrl = card.querySelector('img').src;
+                const id = card.dataset.menuId || '';
                 const title = card.querySelector('.menu-name').textContent;
                 const price = card.querySelector('.menu-price').textContent;
 
-                currentActiveItem = { title, price };
+                currentActiveItem = { id, title, price };
 
                 modalImg.src = imgUrl;
                 modalTitle.textContent = title;
@@ -2549,14 +2662,23 @@
                 detailModal.classList.add('active');
                 detailModal.setAttribute('aria-hidden', 'false');
             });
+        });
 
-            const btnBeli = card.querySelector('.btn-beli');
-            btnBeli.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const title = card.querySelector('.menu-name').textContent;
-                const price = card.querySelector('.menu-price').textContent;
-                addToCart(title, price);
-            });
+        // HOTFIX V2.2.2: satu handler untuk seluruh tombol + Keranjang.
+        // Lebih tahan terhadap perubahan DOM dan tetap mengambil menu_id dari card.
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-beli');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (btn.disabled) return;
+
+            const card = btn.closest('.menu-card');
+            if (!card) return;
+            const title = card.querySelector('.menu-name')?.textContent?.trim() || '';
+            const price = card.querySelector('.menu-price')?.textContent || '';
+            if (!title || !price) return;
+            addToCart(title, price);
         });
 
         function closeModal() {
@@ -2575,7 +2697,33 @@
         });
 
         // --- 2. KERANJANG BELANJA (CART) ---
-        let cart = JSON.parse(localStorage.getItem('kaficart')) || [];
+        const menuCatalogByTitle = new Map([...menuCards].map(card => {
+            const title = card.querySelector('.menu-name')?.textContent?.trim() || '';
+            return [title, { id: card.dataset.menuId || '', title }];
+        }));
+
+        function fallbackMenuId(title) {
+            return String(title || '')
+                .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        }
+
+        let cart = [];
+        try {
+            const savedCart = JSON.parse(localStorage.getItem('kaficart') || '[]');
+            cart = Array.isArray(savedCart) ? savedCart : [];
+        } catch (_) {
+            // Jangan biarkan localStorage lama/rusak mematikan seluruh JavaScript halaman.
+            localStorage.removeItem('kaficart');
+            cart = [];
+        }
+        // Migrasi ringan cart versi lama yang belum menyimpan menu ID.
+        cart = cart.map(item => ({
+            ...item,
+            id: item.id || menuCatalogByTitle.get(String(item.title || '').trim())?.id || fallbackMenuId(item.title),
+            qty: Math.max(1, Number(item.qty || 1)),
+            price: Number(item.price || 0)
+        }));
 
         const cartBadge = document.getElementById('cartBadge');
         const cartDrawer = document.getElementById('cartDrawer');
@@ -2596,16 +2744,26 @@
         }
 
         function addToCart(title, priceStr) {
+            const cleanTitle = String(title || '').trim();
+            const id = menuCatalogByTitle.get(cleanTitle)?.id || fallbackMenuId(cleanTitle);
             const price = parsePrice(priceStr);
-            const existingIndex = cart.findIndex(item => item.title === title);
+            if (!cleanTitle || !id || !price) {
+                showToast('⚠️ Menu gagal ditambahkan. Coba muat ulang halaman.');
+                return;
+            }
 
+            const existingIndex = cart.findIndex(item => item.id === id || item.title === cleanTitle);
             if (existingIndex !== -1) {
-                cart[existingIndex].qty += 1;
+                cart[existingIndex].id = id;
+                cart[existingIndex].title = cleanTitle;
+                cart[existingIndex].price = price;
+                cart[existingIndex].qty = Number(cart[existingIndex].qty || 0) + 1;
             } else {
-                cart.push({ title, price, qty: 1 });
+                cart.push({ id, title: cleanTitle, price, qty: 1 });
             }
 
             updateCartUI();
+            showToast(`✅ ${cleanTitle} ditambahkan ke keranjang`);
         }
 
         window.changeQty = function (index, change) {
@@ -2636,7 +2794,7 @@
                 html += `
                     <div class="cart-item">
                         <div>
-                            <div class="cart-item-title">${item.title}</div>
+                            <div class="cart-item-title">${escapeHTML(item.title)}</div>
                             <div class="cart-item-price">${formatRupiah(item.price)}</div>
                         </div>
                         <div class="qty-controls">
@@ -2661,12 +2819,56 @@
         const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
         const proofInput = document.getElementById('proofInput');
         const proofFileInfo = document.getElementById('proofFileInfo');
+        const paymentMethodInputs = [...document.querySelectorAll('input[name="paymentMethod"]')];
+        const paymentMethodDetails = [...document.querySelectorAll('[data-payment-detail]')];
+        const paymentMethodPlaceholder = document.getElementById('paymentMethodPlaceholder');
+        const copyDanaBtn = document.getElementById('copyDanaBtn');
         const MAX_PROOF_BYTES = 5 * 1024 * 1024;
         const TARGET_PROOF_BYTES = 300 * 1024;
         const MAX_UPLOAD_PROOF_BYTES = 500 * 1024;
         const PROOF_RETENTION_DAYS = 14;
+        const ALLOWED_PAYMENT_METHODS = new Set(['QRIS', 'DANA', 'Transfer Bank']);
         let preparedProofFile = null;
         let originalProofMeta = null;
+        let selectedPaymentMethod = '';
+
+        function syncPaymentReadyState() {
+            const ready = Boolean(preparedProofFile && selectedPaymentMethod && ALLOWED_PAYMENT_METHODS.has(selectedPaymentMethod));
+            confirmPaymentBtn.disabled = !ready;
+            confirmPaymentBtn.style.backgroundColor = ready ? '#22c55e' : '#9ca3af';
+            confirmPaymentBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
+            confirmPaymentBtn.textContent = !selectedPaymentMethod
+                ? '🔒 Pilih Metode Pembayaran'
+                : !preparedProofFile
+                    ? '🔒 Upload Bukti Bayar Dahulu'
+                    : '✅ Buat Pesanan';
+        }
+
+        function resetPaymentMethod() {
+            selectedPaymentMethod = '';
+            paymentMethodInputs.forEach(input => { input.checked = false; });
+            paymentMethodDetails.forEach(detail => { detail.hidden = true; });
+            if (paymentMethodPlaceholder) paymentMethodPlaceholder.hidden = false;
+            syncPaymentReadyState();
+        }
+
+        function choosePaymentMethod(method) {
+            if (!ALLOWED_PAYMENT_METHODS.has(method) || method === 'Transfer Bank') return;
+            selectedPaymentMethod = method;
+            paymentMethodDetails.forEach(detail => { detail.hidden = detail.dataset.paymentDetail !== method; });
+            if (paymentMethodPlaceholder) paymentMethodPlaceholder.hidden = true;
+            syncPaymentReadyState();
+        }
+
+        paymentMethodInputs.forEach(input => input.addEventListener('change', () => choosePaymentMethod(input.value)));
+        copyDanaBtn?.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText('089520282150');
+                showToast('📋 Nomor DANA disalin');
+            } catch (_) {
+                showToast('DANA: 089520282150 a.n Alan');
+            }
+        });
 
         function formatFileSize(bytes) {
             const size = Number(bytes || 0);
@@ -2684,11 +2886,8 @@
             preparedProofFile = null;
             originalProofMeta = null;
             proofInput.value = '';
-            confirmPaymentBtn.disabled = true;
-            confirmPaymentBtn.style.backgroundColor = '#9ca3af';
-            confirmPaymentBtn.style.cursor = 'not-allowed';
-            confirmPaymentBtn.textContent = '🔒 Upload Bukti Bayar Dahulu';
             setProofInfo(message);
+            syncPaymentReadyState();
         }
 
         function isSupportedProofFile(file) {
@@ -2772,6 +2971,7 @@
             const totalHarga = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             paymentTotal.textContent = formatRupiah(totalHarga);
 
+            resetPaymentMethod();
             resetProofSelection();
 
             cartDrawer.classList.remove('active');
@@ -2814,10 +3014,7 @@
                 const saved = Math.max(0, originalProofMeta.size - preparedProofFile.size);
                 const percent = originalProofMeta.size ? Math.round((saved / originalProofMeta.size) * 100) : 0;
                 setProofInfo(`✅ Siap: ${formatFileSize(originalProofMeta.size)} → ${formatFileSize(preparedProofFile.size)}${percent > 0 ? ` · hemat ${percent}%` : ' · sudah optimal'}.`, 'ok');
-                confirmPaymentBtn.disabled = false;
-                confirmPaymentBtn.style.backgroundColor = '#22c55e';
-                confirmPaymentBtn.style.cursor = 'pointer';
-                confirmPaymentBtn.textContent = '✅ Buat Pesanan';
+                syncPaymentReadyState();
             } catch (error) {
                 console.warn('[Nastel] Gagal optimasi bukti:', error);
                 resetProofSelection(`❌ ${error.message || 'Gagal membaca gambar.'} Coba screenshot/JPG/PNG.`, 'error');
@@ -2852,6 +3049,10 @@
                 closePaymentModal();
                 return;
             }
+            if (!selectedPaymentMethod || !ALLOWED_PAYMENT_METHODS.has(selectedPaymentMethod) || selectedPaymentMethod === 'Transfer Bank') {
+                showToast("⚠️ Pilih metode pembayaran QRIS atau DANA terlebih dahulu.");
+                return;
+            }
             if (!proofFile) {
                 showToast("⚠️ Upload bukti pembayaran terlebih dahulu.");
                 return;
@@ -2861,11 +3062,12 @@
             confirmPaymentBtn.disabled = true;
             confirmPaymentBtn.textContent = '⏳ Menyimpan order & bukti...';
             try {
-                const order = await createV2Order({ customerName, note, items: cart, proofFile });
+                const order = await createV2Order({ customerName, note, items: cart, proofFile, paymentMethod: selectedPaymentMethod });
                 cart = [];
                 document.getElementById('customerName').value = '';
                 document.getElementById('orderNote').value = '';
                 resetProofSelection();
+                resetPaymentMethod();
                 updateCartUI();
                 closePaymentModal();
                 renderCashierDashboard();
@@ -3242,13 +3444,19 @@
             return clientId;
         }
 
-        async function createV2Order({ customerName, note, items, proofFile }) {
+        async function createV2Order({ customerName, note, items, proofFile, paymentMethod }) {
             if (!proofFile) throw new Error('Bukti pembayaran belum tersedia.');
             if (proofFile.size > MAX_UPLOAD_PROOF_BYTES) {
                 throw new Error('Bukti pembayaran melebihi batas 500 KB setelah kompres.');
             }
+            if (!ALLOWED_PAYMENT_METHODS.has(paymentMethod) || paymentMethod === 'Transfer Bank') {
+                throw new Error('Metode pembayaran tidak tersedia.');
+            }
 
+            // ID dikirim bersama nama untuk migrasi backend yang aman. Server tetap wajib
+            // mengambil harga + ketersediaan dari database, bukan mempercayai harga browser.
             const rpcItems = items.map(item => ({
+                id: item.id || fallbackMenuId(item.title),
                 name: item.title,
                 qty: Number(item.qty)
             }));
@@ -3256,6 +3464,7 @@
             const form = new FormData();
             form.append('customerName', customerName);
             form.append('note', note === 'Tidak ada' ? '' : note);
+            form.append('paymentMethod', paymentMethod);
             form.append('items', JSON.stringify(rpcItems));
             form.append('proof', proofFile, proofFile.name || 'bukti-pembayaran.jpg');
             form.append(
@@ -3300,6 +3509,7 @@
                 customerName,
                 note,
                 items: items.map(item => ({
+                    id: item.id || fallbackMenuId(item.title),
                     title: item.title,
                     price: Number(item.price),
                     qty: Number(item.qty)
@@ -3308,7 +3518,7 @@
                 status: row.status || V2_STATUS_FLOW[0],
                 createdAt: row.created_at || new Date().toISOString(),
                 updatedAt: row.created_at || new Date().toISOString(),
-                payment: 'QRIS / Transfer',
+                payment: row.payment_method || paymentMethod,
                 paymentProof: true,
                 proofPath: row.proof_path || null,
                 proofName: proofFile.name || 'bukti-pembayaran.jpg',
@@ -3349,7 +3559,7 @@
                 status: row.status,
                 createdAt: row.created_at,
                 updatedAt: row.updated_at,
-                payment: row.payment_method || 'QRIS / Transfer',
+                payment: row.payment_method || 'QRIS / Transfer (order lama)',
                 paymentStatus: row.payment_status,
                 paymentProof: Boolean(row.proof_path) && !row.proof_deleted_at,
                 proofPath: row.proof_path,
@@ -3511,7 +3721,7 @@
                     note: row.note || 'Tidak ada',
                     status: row.status,
                     paymentStatus: row.payment_status,
-                    payment: row.payment_method,
+                    payment: row.payment_method || existing.payment || 'QRIS / Transfer (order lama)',
                     amountPaid: row.amount_paid == null ? null : Number(row.amount_paid),
                     cancellationStatus: row.cancellation_status || 'Tidak ada',
                     cancellationReason: row.cancellation_reason || '',
@@ -3538,7 +3748,8 @@
                         </div>
                         ${orderProgressHTML(order)}
                         ${orderItemsHTML(order)}
-                        <div class="v2-order-meta" style="margin-top:10px">💳 <strong>${escapeHTML(order.paymentStatus || 'Menunggu verifikasi pembayaran')}</strong></div>
+                        <div class="v2-order-meta" style="margin-top:10px">💳 Metode: <strong>${escapeHTML(order.payment || 'Tidak tercatat')}</strong></div>
+                        <div class="v2-order-meta" style="margin-top:4px">Status pembayaran: <strong>${escapeHTML(order.paymentStatus || 'Menunggu verifikasi pembayaran')}</strong></div>
                         ${paymentDifferenceText(order) ? `<div class="v2-order-meta" style="margin-top:4px">${escapeHTML(paymentDifferenceText(order))}</div>` : ''}
                         ${order.cancellationStatus && order.cancellationStatus !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">🧾 Pembatalan: <strong>${escapeHTML(order.cancellationStatus)}</strong>${order.cancellationReason ? ` · ${escapeHTML(order.cancellationReason)}` : ''}</div>` : ''}
                         ${order.refundStatus && order.refundStatus !== 'Tidak ada' ? `<div class="v2-order-meta" style="margin-top:6px">↩️ Refund: <strong>${escapeHTML(order.refundStatus)}</strong>${order.refundAmount ? ` · ${formatRupiah(order.refundAmount)}` : ''}</div>` : ''}
@@ -3609,7 +3820,8 @@
                 `🧾 *Order ID:* ${order.id}`,
                 `👤 *${getOrderCustomerLabel(order)}*`,
                 `📝 *Catatan:* ${order.note}`,
-                `🟡 *Status:* ${order.status}`, '',
+                `🟡 *Status:* ${order.status}`,
+                `💳 *Metode pembayaran:* ${order.payment || 'Tidak tercatat'}`, '',
                 '*Rincian Pesanan:*'
             ];
             order.items.forEach((item, index) => lines.push(`${index + 1}. ${item.title} (${item.qty}x) = ${formatRupiah(item.price * item.qty)}`));
@@ -4261,7 +4473,8 @@
 
                 const paymentInfo = `
                     <div class="v2-note" style="margin:10px 0 0">
-                        💳 <strong>${escapeHTML(order.paymentStatus || 'Menunggu verifikasi kasir')}</strong>
+                        💳 Metode: <strong>${escapeHTML(order.payment || 'Tidak tercatat')}</strong><br>
+                        Status: <strong>${escapeHTML(order.paymentStatus || 'Menunggu verifikasi kasir')}</strong>
                         ${paymentDifferenceText(order) ? `<br><small>${escapeHTML(paymentDifferenceText(order))}</small>` : ''}
                         ${order.refundStatus !== 'Tidak ada'
                             ? `<br><small>↩️ Refund: <strong>${escapeHTML(order.refundStatus)}</strong>${order.refundAmount ? ` · ${formatRupiah(order.refundAmount)}` : ''}</small>`
@@ -4532,7 +4745,8 @@
             const lines = [
                 `${order.id} · ${getOrderCustomerLabel(order)}`,
                 `Status: ${order.status}`,
-                `Pembayaran: ${order.paymentStatus}`,
+                `Metode pembayaran: ${order.payment || 'Tidak tercatat'}`,
+                `Status pembayaran: ${order.paymentStatus}`,
                 order.amountPaid == null ? null : `Nominal masuk: ${formatRupiah(order.amountPaid)}`,
                 order.cancellationStatus === 'Tidak ada' ? null : `Pembatalan: ${order.cancellationStatus}`,
                 order.cancellationReason ? `Alasan pembatalan/refund: ${order.cancellationReason}` : null,
@@ -4550,39 +4764,62 @@
         });
 
         // Ketersediaan menu ONLINE · Supabase menjadi sumber data utama.
-        // Customer yang sedang membuka halaman ikut menerima perubahan lewat Realtime.
+        // V2.2 memprioritaskan menu_id stabil, tetapi tetap fallback ke name selama migrasi DB.
         const menuAvailabilityCache = new Map();
         let menuRealtimeChannel = null;
+        let menuIdColumnAvailable = true;
 
-        function setMenuAvailabilityCache(name, available) {
-            const key = String(name || '').trim();
-            if (!key) return;
-            menuAvailabilityCache.set(key, available !== false);
+        function menuAvailabilityKeys(menuId, name) {
+            const keys = [];
+            if (String(menuId || '').trim()) keys.push(`id:${String(menuId).trim()}`);
+            if (String(name || '').trim()) keys.push(`name:${String(name).trim()}`);
+            return keys;
         }
 
-        function isMenuAvailable(title) {
-            const key = String(title || '').trim();
-            return menuAvailabilityCache.has(key) ? menuAvailabilityCache.get(key) !== false : true;
+        function setMenuAvailabilityCache(menuId, name, available) {
+            menuAvailabilityKeys(menuId, name).forEach(key => menuAvailabilityCache.set(key, available !== false));
+        }
+
+        function isMenuAvailable(menuId, title) {
+            const keys = menuAvailabilityKeys(menuId, title);
+            for (const key of keys) {
+                if (menuAvailabilityCache.has(key)) return menuAvailabilityCache.get(key) !== false;
+            }
+            return true;
+        }
+
+        function isMissingMenuIdColumn(error) {
+            const message = String(error?.message || error?.details || error || '');
+            return /menu_id|column.*does not exist|schema cache/i.test(message);
         }
 
         async function loadMenuAvailability() {
-            const { data, error } = await nastelSupabase
+            let result = await nastelSupabase
                 .from('menu_items')
-                .select('name,is_available');
-            if (error) throw error;
+                .select('menu_id,name,is_available');
+
+            if (result.error && isMissingMenuIdColumn(result.error)) {
+                menuIdColumnAvailable = false;
+                result = await nastelSupabase.from('menu_items').select('name,is_available');
+            }
+            if (result.error) throw result.error;
 
             menuAvailabilityCache.clear();
-            (data || []).forEach(row => setMenuAvailabilityCache(row.name, row.is_available));
+            (result.data || []).forEach(row => {
+                const fallbackId = menuCatalogByTitle.get(String(row.name || '').trim())?.id || '';
+                setMenuAvailabilityCache(row.menu_id || fallbackId, row.name, row.is_available);
+            });
             applyMenuAvailability();
             if (cashierDashboard && !cashierDashboard.hidden) renderAvailabilityManager();
-            return data || [];
+            return result.data || [];
         }
 
         function applyMenuAvailability() {
             menuCards.forEach(card => {
                 const title = card.querySelector('.menu-name').textContent.trim();
+                const menuId = card.dataset.menuId || fallbackMenuId(title);
                 const button = card.querySelector('.btn-beli');
-                const available = isMenuAvailable(title);
+                const available = isMenuAvailable(menuId, title);
                 card.classList.toggle('v2-sold-out', !available);
                 if (button) {
                     button.disabled = !available;
@@ -4597,16 +4834,44 @@
         function renderAvailabilityManager() {
             const wrap = document.getElementById('availabilityManager');
             if (!wrap) return;
-            const items = [...menuCards].map(card => card.querySelector('.menu-name').textContent.trim());
-            wrap.innerHTML = items.map(title => {
-                const available = isMenuAvailable(title);
-                return `<div class="v2-availability-item"><span>${escapeHTML(title)}</span><button class="v2-stock-toggle ${available ? 'on' : 'off'}" type="button" onclick="toggleV2Availability('${encodeURIComponent(title)}', this)">${available ? 'Tersedia' : 'Habis'}</button></div>`;
+            const items = [...menuCards].map(card => ({
+                id: card.dataset.menuId || fallbackMenuId(card.querySelector('.menu-name').textContent.trim()),
+                title: card.querySelector('.menu-name').textContent.trim()
+            }));
+            wrap.innerHTML = items.map(item => {
+                const available = isMenuAvailable(item.id, item.title);
+                return `<div class="v2-availability-item"><span>${escapeHTML(item.title)}</span><button class="v2-stock-toggle ${available ? 'on' : 'off'}" type="button" onclick="toggleV2Availability('${encodeURIComponent(item.id)}','${encodeURIComponent(item.title)}', this)">${available ? 'Tersedia' : 'Habis'}</button></div>`;
             }).join('');
         }
 
-        window.toggleV2Availability = async function(encodedTitle, sourceButton) {
-            const title = decodeURIComponent(encodedTitle);
-            const nextAvailable = !isMenuAvailable(title);
+        async function updateAvailabilityRow(menuId, title, nextAvailable) {
+            if (menuIdColumnAvailable && menuId) {
+                const byId = await nastelSupabase
+                    .from('menu_items')
+                    .update({ is_available: nextAvailable })
+                    .eq('menu_id', menuId)
+                    .select('menu_id,name,is_available')
+                    .maybeSingle();
+
+                if (!byId.error && byId.data) return byId.data;
+                if (byId.error && isMissingMenuIdColumn(byId.error)) menuIdColumnAvailable = false;
+                else if (byId.error && byId.error.code !== 'PGRST116') throw byId.error;
+            }
+
+            const byName = await nastelSupabase
+                .from('menu_items')
+                .update({ is_available: nextAvailable })
+                .eq('name', title)
+                .select('name,is_available')
+                .single();
+            if (byName.error) throw byName.error;
+            return { ...byName.data, menu_id: menuId };
+        }
+
+        window.toggleV2Availability = async function(encodedMenuId, encodedTitle, sourceButton) {
+            const menuId = decodeURIComponent(encodedMenuId || '');
+            const title = decodeURIComponent(encodedTitle || '');
+            const nextAvailable = !isMenuAvailable(menuId, title);
             const oldText = sourceButton?.textContent;
             if (sourceButton) {
                 sourceButton.disabled = true;
@@ -4614,15 +4879,8 @@
             }
 
             try {
-                const { data, error } = await nastelSupabase
-                    .from('menu_items')
-                    .update({ is_available: nextAvailable })
-                    .eq('name', title)
-                    .select('name,is_available')
-                    .single();
-
-                if (error) throw error;
-                setMenuAvailabilityCache(data.name, data.is_available);
+                const data = await updateAvailabilityRow(menuId, title, nextAvailable);
+                setMenuAvailabilityCache(data.menu_id || menuId, data.name || title, data.is_available);
                 applyMenuAvailability();
                 renderAvailabilityManager();
                 showToast(`${data.is_available ? '✅' : '⛔'} ${title}: ${data.is_available ? 'tersedia' : 'habis'}`);
@@ -4630,7 +4888,7 @@
                 console.error('[Nastel] Gagal update ketersediaan menu:', error);
                 if (sourceButton) {
                     sourceButton.disabled = false;
-                    sourceButton.textContent = oldText || (isMenuAvailable(title) ? 'Tersedia' : 'Habis');
+                    sourceButton.textContent = oldText || (isMenuAvailable(menuId, title) ? 'Tersedia' : 'Habis');
                 }
                 showToast(`⚠️ Gagal update ${title}`);
             }
@@ -4642,9 +4900,10 @@
                 .channel('nastel-menu-availability-live')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, payload => {
                     if (payload.eventType === 'DELETE') {
-                        if (payload.old?.name) menuAvailabilityCache.delete(String(payload.old.name).trim());
-                    } else if (payload.new?.name) {
-                        setMenuAvailabilityCache(payload.new.name, payload.new.is_available);
+                        menuAvailabilityKeys(payload.old?.menu_id, payload.old?.name).forEach(key => menuAvailabilityCache.delete(key));
+                    } else if (payload.new?.name || payload.new?.menu_id) {
+                        const fallbackId = menuCatalogByTitle.get(String(payload.new?.name || '').trim())?.id || '';
+                        setMenuAvailabilityCache(payload.new?.menu_id || fallbackId, payload.new?.name, payload.new?.is_available);
                     }
                     applyMenuAvailability();
                     if (cashierDashboard && !cashierDashboard.hidden) renderAvailabilityManager();
@@ -4658,7 +4917,7 @@
 
         // Cegah item habis ditambahkan lewat modal detail.
         const originalModalBuyHandlerGuard = () => {
-            if (currentActiveItem.title && !isMenuAvailable(currentActiveItem.title)) {
+            if (currentActiveItem.title && !isMenuAvailable(currentActiveItem.id, currentActiveItem.title)) {
                 showToast('⛔ Menu sedang habis');
                 return false;
             }
@@ -4693,7 +4952,7 @@
                 await cafeAudio.play();
                 musicStatus.textContent = "Pause Music"; musicBtn.classList.add('playing'); isMusicPlaying = true;
             } catch (error) {
-                showToast("⚠️ Musik gagal diputar. Pastikan musik/TRAUMA.mp3 tersedia.");
+                showToast("⚠️ Musik gagal diputar. Periksa koneksi internet atau coba lagi.");
             }
         });
 
