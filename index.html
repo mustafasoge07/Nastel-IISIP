@@ -2517,7 +2517,7 @@
 
 
     <!-- WARKOP NASTEL V2.3 · KASIR DASHBOARD + ORDER CHAT -->
-    <button id="cashierOpenBtn" class="v2-floating-cashier" type="button">🧾 Kasir V2.3</button>
+    <button id="cashierOpenBtn" class="v2-floating-cashier" type="button">🧾 Kasir Nastel</button>
 
     <div id="cashierModal" class="v2-modal" aria-hidden="true" hidden>
         <div class="v2-modal-panel">
@@ -2606,7 +2606,7 @@
                 <button id="successNotifyBtn" class="v2-btn" type="button">🔔 Aktifkan Notifikasi Pesanan</button>
                 <button id="successChatBtn" class="v2-btn" type="button">💬 Chat dengan Kasir</button>
                 <button id="successTrackBtn" class="v2-btn secondary" type="button">Lacak Pesanan</button>
-                <button id="successWaBtn" class="v2-btn secondary" type="button">📱 WhatsApp (cadangan)</button>
+                <button id="successWaBtn" class="v2-btn secondary" type="button">📱 WhatsApp ke Kasir</button>
                 <button id="successCloseBtn" class="v2-btn secondary" type="button">Tutup</button>
             </div>
         </div>
@@ -4208,7 +4208,7 @@
                         <div class="v2-track-actions">
                             <button class="v2-btn" type="button" onclick="openOrderChat('${escapeHTML(order.id)}')">💬 Chat dengan Kasir</button>
                             <button class="v2-btn secondary ${customerPushMarked(order.id) ? 'customer-push-active' : ''}" data-customer-push-order="${escapeHTML(order.id)}" type="button" onclick="toggleCustomerOrderPush('${escapeHTML(order.id)}')">${escapeHTML(customerPushButtonLabel(order.id))}</button>
-                            <button class="v2-btn secondary" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">📱 WhatsApp cadangan</button>
+                            <button class="v2-btn secondary" type="button" onclick="openTrackedOrderWhatsApp('${escapeHTML(order.id)}')">📱 WhatsApp ke Kasir</button>
                             <button class="v2-btn secondary" type="button" onclick="renderTrackedOrder('${escapeHTML(order.id)}')">↻ Refresh Status</button>
                             ${order.status === 'Menunggu Konfirmasi' && order.cancellationStatus === 'Tidak ada'
                                 ? `<button class="v2-btn danger" type="button" onclick="requestTrackedCancellation('${escapeHTML(order.id)}')">Ajukan Pembatalan</button>`
