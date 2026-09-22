@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- NASTEL V2.3.3 · Mobile Customer Journey 4-Step + Optimized Dashboard + Realtime Chat · Supabase-Ready -->
+<!-- NASTEL V2.3.8 · Accessible Fixed 5-Item Mobile Nav + Restored Customer Journey + Realtime Chat · Supabase-Ready -->
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warkop Nastel IISIP · V2.3.3 Customer Journey</title>
+    <title>Warkop Nastel IISIP · V2.3.8 Accessible Mobile Nav</title>
     <style>
         :root {
             --bg-color: #fff8f3;
@@ -3362,6 +3362,67 @@
                 font-size: .49rem !important;
             }
         }
+
+        /* ===== NASTEL V2.3.8 · ACCESSIBLE FIXED 5-ITEM MOBILE NAV =====
+           Hanya navigasi utama yang diubah. Customer journey memakai desain V2.3.3 sebelumnya. */
+        @media (max-width: 600px) {
+            .youth-nav {
+                position: sticky !important;
+                top: 6px !important;
+                z-index: 1000 !important;
+                display: grid !important;
+                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                gap: 4px !important;
+                padding: 6px !important;
+                margin: 12px 0 14px !important;
+                overflow: hidden !important;
+                justify-content: stretch !important;
+                align-items: stretch !important;
+                border-radius: 18px !important;
+            }
+
+            .youth-nav a {
+                min-width: 0 !important;
+                width: 100% !important;
+                min-height: 56px !important;
+                box-sizing: border-box !important;
+                padding: 8px 3px !important;
+                margin: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+                white-space: normal !important;
+                overflow: hidden !important;
+                line-height: 1.16 !important;
+                border-radius: 12px !important;
+                font-size: clamp(.70rem, 3vw, .82rem) !important;
+                font-weight: 900 !important;
+                flex: none !important;
+            }
+
+            .youth-nav a strong {
+                display: block !important;
+                min-width: 0 !important;
+                overflow-wrap: normal !important;
+                word-break: normal !important;
+                font-weight: 900 !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .youth-nav { gap: 3px !important; padding: 5px !important; }
+            .youth-nav a {
+                min-height: 54px !important;
+                padding: 7px 2px !important;
+                font-size: .66rem !important;
+                line-height: 1.12 !important;
+            }
+        }
+
     </style>
 
     <!-- PWA / Add to Home Screen -->
@@ -3419,10 +3480,6 @@
         </div>
     </header>
 
-    <div class="quick-info" aria-label="geser menu dan lacar order"></div>
-    <h4><strong>Geser kesamping untuk lihat Menu-Menu dan Lacak Orderanmu!</strong></h4><div>
-    </div>
-    
     <nav class="youth-nav" aria-label="Navigasi menu">
         <a href="#makanan"><strong>🍛 Makanan</strong></a>
         <a href="#cemilan"><strong>🍿 Cemilan</strong></a>
