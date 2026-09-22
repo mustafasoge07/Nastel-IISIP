@@ -1534,6 +1534,41 @@
             #orderTrackResult .v2-wa-reminder { overflow-wrap: anywhere; }
         }
 
+        /* ===== V2.3.5 · MOBILE NAV: LACAK ORDER SELALU TERLIHAT ===== */
+        @media(max-width:600px) {
+            .youth-nav {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 7px;
+                overflow: visible;
+                justify-content: stretch;
+                padding: 7px;
+                margin: 12px 0 14px;
+            }
+            .youth-nav a {
+                min-width: 0;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px 7px;
+                text-align: center;
+                white-space: normal;
+                line-height: 1.2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .journey-steps {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+                overflow: visible !important;
+            }
+            .journey-steps > div {
+                min-width: 0 !important;
+                width: auto !important;
+                flex: initial !important;
+            }
+        }
+
         @media(max-width:380px) {
             #orderTrackResult .v2-progress-step { font-size: .51rem; }
             #orderTrackResult .v2-order-item { grid-template-columns: 1fr; gap: 2px; }
